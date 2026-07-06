@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 7 test — iCal, OG endpoints, trip export buttons, EN/JP i18n. Backend iCal works. OG endpoints work on backend port 8001 but are UNREACHABLE via public URL because ingress only routes /api/* to backend (all non-/api requests return SPA index.html). Frontend trip export buttons and JP toggle all work correctly.",
+  "tested_scope": ["backend", "frontend", "integration", "i18n"],
+  "passed": [
+    "GET /api/trips/share/34d2f1a211/ics returns 200, text/calendar, valid BEGIN:VCALENDAR + VEVENT + DTSTART + SUMMARY (Fushimi Inari) + LOCATION (Kyoto)",
+    "Backend /share/trip/{slug} route (tested via localhost:8001) returns HTML with og:title, og:description, og:image, og:url, twitter:card meta + <meta http-equiv=refresh> to /trip/{slug}",
+    "Backend /share/cosplay/{id} route responds (404 for invalid id, expected)",
+    "Frontend /trip/34d2f1a211 renders trip-copy-link, trip-ics-btn, trip-pdf-btn (all 3 buttons present)",
+    "trip-ics-btn triggers .ics file download (filename: 34d2f1a211.ics)",
+    "trip-pdf-btn click succeeds without crash (invokes window.print())",
+    "lang-toggle (data-testid=lang-toggle) present in authenticated navbar",
+    "JP toggle: landing hero shows 'あなたの好きなアニメが生まれた世界を旅しよう。' + CTAs '旅を始める' and '地図を見る' — all expected JP strings verified",
+    "Login flow with traveler@ani.jp / sakura2026 works, redirects to /explore"
+  ],
+  "failed": [
+    {
+      "area": "OG endpoints via public URL",
+      "issue": "GET https://anime-travel-ai.preview.emergentagent.com/share/trip/34d2f1a211 returns the React SPA index.html (7.7KB, no og: meta tags) instead of the backend-rendered OG HTML. Ingress/proxy only routes /api/* to backend; /share/* falls through to frontend static serving. Same applies to /share/cosplay/{id}.",
+      "evidence": "curl to public /share/trip/34d2f1a211 returns '<title>Emergent | Fullstack App</title>' with no og:* tags. Same path on http://localhost:8001 returns proper OG HTML with '<title>Test Kyoto Trip · AniJourney AI</title>' + og:title/description/image/url + meta refresh.",
+      "priority": "HIGH"
+    },
+    {
+      "area": "Landing page navbar (unauthenticated)",
+      "issue": "lang-toggle button is NOT rendered on the public landing page (/) when not authenticated — it only appears in the authenticated navbar. Anonymous visitors cannot switch to JP from the landing page.",
+      "evidence": "Playwright: on /, data-testid=lang-toggle count=0. After login, count=1 in authenticated navbar. Language switch on landing requires prior login.",
+      "priority": "MEDIUM"
+    }
+  ],
+  "action_items": [
+    "Configure ingress/reverse-proxy to route /share/trip/* and /share/cosplay/* to the backend service, OR mount these routes under /api/share/... so they're reachable via the public URL for social media crawlers (FB/Twitter/Slack unfurls).",
+    "Expose lang-toggle in the unauthenticated landing page navbar so anonymous users can switch to JP before signing up."
+  ],
+  "success_rate": {"backend": "66% (ICS ok; OG routes work on origin but unreachable via public URL)", "frontend": "100% (all trip export buttons + JP i18n work)"},
+  "retest_needed": true,
+  "full_testing_deferred": true
+}

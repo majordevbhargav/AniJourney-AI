@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Sparkles, Map, MessageCircle, Utensils, Award, Compass } from "lucide-react";
+import { useI18n } from "../context/I18nContext";
 
 const HERO_1 = "https://images.unsplash.com/photo-1712976692892-07d78428215d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHw0fHxtb3VudCUyMGZ1amklMjBjaGVycnklMjBibG9zc29tc3xlbnwwfHx8fDE3ODMzMzIwMDV8MA&ixlib=rb-4.1.0&q=85";
 const HERO_2 = "https://images.unsplash.com/photo-1665706896821-319040b81753?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxqYXBhbiUyMGt5b3RvJTIwdGVtcGxlJTIwc3Vuc2V0fGVufDB8fHx8MTc4MzMzMjAwNnww&ixlib=rb-4.1.0&q=85";
@@ -22,6 +23,7 @@ const toneMap = {
 };
 
 export default function Landing() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-sky-texture overflow-x-hidden">
       {/* Sakura petals */}
@@ -33,20 +35,17 @@ export default function Landing() {
       <section className="relative pt-40 pb-24 px-6 md:px-16 max-w-7xl mx-auto" data-testid="landing-hero">
         <div className="grid lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-6 relative z-10">
-            <div className="tape-tag mb-6">SEASON 2 · READY</div>
+            <div className="tape-tag mb-6">{t("eyebrow")}</div>
             <div className="text-rose-500 font-body font-bold text-sm mb-3 tracking-[0.2em]">アニジャーニー · AI</div>
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-slate-900 mb-6" data-testid="hero-title">
-              Travel through<br />
-              the <span className="italic text-sky-500">worlds</span> that<br />
-              inspired your<br />
-              favorite <span className="text-rose-500">anime</span>.
+              {t("heroTitle")}
             </h1>
             <p className="text-slate-600 text-lg leading-relaxed max-w-lg mb-8">
-              A cinematic AI pilgrimage planner. Suga Shrine to Ashikaga Wisteria — every location, mapped, planned, and guided by your favorite characters.
+              {t("heroSub")}
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/register" className="btn-coral" data-testid="hero-cta-primary">Begin Journey →</Link>
-              <Link to="/explore" className="btn-outline" data-testid="hero-cta-secondary">Explore Atlas</Link>
+              <Link to="/register" className="btn-coral" data-testid="hero-cta-primary">{t("beginJourney")} →</Link>
+              <Link to="/explore" className="btn-outline" data-testid="hero-cta-secondary">{t("exploreAtlas")}</Link>
             </div>
           </div>
 

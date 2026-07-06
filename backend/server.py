@@ -556,6 +556,94 @@ async def get_trip(slug: str):
     return t
 
 
+def _ical_esc(s: str) -> str:
+    return (s or "").replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+
+
+@api_router.get("/trips/share/{slug}/ics")
+async def trip_ics(slug: str):
+    t = await db.trips.find_one({"slug": slug}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Trip not found")
+    it = t["itinerary"]
+    base = datetime.now(timezone.utc)
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//AniJourney AI//EN", "CALSCALE:GREGORIAN"]
+    for d in it.get("days", []):
+        day_offset = d.get("day", 1) - 1
+        day_date = (base + timedelta(days=day_offset)).strftime("%Y%m%d")
+        time_map = {"morning": "0900", "afternoon": "1400", "evening": "1900"}
+        for i, a in enumerate(d.get("activities", [])):
+            start = time_map.get((a.get("time") or "morning").lower(), "0900")
+            end_h = int(start[:2]) + 2
+            end = f"{end_h:02d}{start[2:]}"
+            uid = f"{slug}-{d.get('day')}-{i}@anijourney.ai"
+            lines += [
+                "BEGIN:VEVENT",
+                f"UID:{uid}",
+                f"DTSTART:{day_date}T{start}00",
+                f"DTEND:{day_date}T{end}00",
+                f"SUMMARY:{_ical_esc(a.get('place',''))}",
+                f"DESCRIPTION:{_ical_esc((a.get('anime','') + ' — ') if a.get('anime') else '')}{_ical_esc(a.get('description',''))}",
+                f"LOCATION:{_ical_esc(d.get('city',''))}",
+                "END:VEVENT"
+            ]
+    lines.append("END:VCALENDAR")
+    ics = "\r\n".join(lines)
+    return Response(content=ics, media_type="text/calendar", headers={"Content-Disposition": f'attachment; filename="{slug}.ics"'})
+
+
+@app.get("/share/trip/{slug}")
+async def og_trip(slug: str):
+    t = await db.trips.find_one({"slug": slug}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Not found")
+    title = t.get("title", "Anime Journey")
+    summary = (t["itinerary"].get("summary") or "A pilgrimage through Japan's anime-inspired locations.")[:200]
+    img = "https://images.unsplash.com/photo-1665706896821-319040b81753?w=1200&h=630&fit=crop"
+    origin = os.environ.get("PUBLIC_ORIGIN", "").rstrip("/")
+    canonical = f"{origin}/trip/{slug}" if origin else f"/trip/{slug}"
+    html = f"""<!doctype html><html><head>
+<meta charset="utf-8" />
+<title>{title} · AniJourney AI</title>
+<meta name="description" content="{summary}" />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="{title} · AniJourney AI" />
+<meta property="og:description" content="{summary}" />
+<meta property="og:image" content="{img}" />
+<meta property="og:url" content="{canonical}" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{title} · AniJourney AI" />
+<meta name="twitter:description" content="{summary}" />
+<meta name="twitter:image" content="{img}" />
+<meta http-equiv="refresh" content="0; url=/trip/{slug}" />
+</head><body><a href="/trip/{slug}">View trip on AniJourney AI</a></body></html>"""
+    return Response(content=html, media_type="text/html")
+
+
+@app.get("/share/cosplay/{item_id}")
+async def og_cosplay(item_id: str):
+    rec = await db.cosplay.find_one({"id": item_id, "is_deleted": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(404, "Not found")
+    anime = await db.anime.find_one({"id": rec["anime_id"]}, {"_id": 0})
+    title = f"Cosplay · {anime['title'] if anime else 'AniJourney'}"
+    desc = f"Cosplay design by {rec.get('user_name','a pilgrim')} — AniJourney AI"
+    origin = os.environ.get("PUBLIC_ORIGIN", "").rstrip("/")
+    img_url = f"{origin}/api/cosplay/image/{item_id}" if origin else f"/api/cosplay/image/{item_id}"
+    html = f"""<!doctype html><html><head>
+<meta charset="utf-8" />
+<title>{title}</title>
+<meta property="og:type" content="image" />
+<meta property="og:title" content="{title}" />
+<meta property="og:description" content="{desc}" />
+<meta property="og:image" content="{img_url}" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="{img_url}" />
+<meta http-equiv="refresh" content="0; url=/gallery" />
+</head><body><a href="/gallery">View on AniJourney AI</a></body></html>"""
+    return Response(content=html, media_type="text/html")
+
+
 app.include_router(api_router)
 
 app.add_middleware(
