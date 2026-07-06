@@ -10,6 +10,8 @@ import AnimeDetail from "@/pages/AnimeDetail";
 import MapView from "@/pages/MapView";
 import Planner from "@/pages/Planner";
 import Companion from "@/pages/Companion";
+import Food from "@/pages/Food";
+import Passport from "@/pages/Passport";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +37,8 @@ function App() {
             <Route path="/map" element={<MapView />} />
             <Route path="/planner" element={<Planner />} />
             <Route path="/companion" element={<Protected><Companion /></Protected>} />
+            <Route path="/food" element={<Food />} />
+            <Route path="/passport" element={<Protected><Passport /></Protected>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

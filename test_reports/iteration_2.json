@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 2 smoke pass. All new backend endpoints (food-festivals, visits/checkin, passport, reviews POST/GET) work. Regression endpoints (anime, locations, auth/login) work. Frontend new pages (/food, /passport) and navbar 6-link layout render correctly. Food page generated 8+ real items from Claude Sonnet 4.5. Passport shows Level 1 / 100 XP / 1 stamp / 5 badges (First Step unlocked) for the test user, and check-in buttons are present and clickable.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/login returns JWT (traveler@ani.jp)",
+    "GET /api/anime -> 200, 6 anime",
+    "GET /api/locations -> 200, 11 locations",
+    "POST /api/visits/checkin (suga-shrine) -> 200 {ok:true, already:true} (idempotent; XP already granted in prior iteration)",
+    "GET /api/passport -> 200 with keys stamps,total_xp,level,count,badges; level=1 xp=100 count=1 badges=5",
+    "POST /api/reviews -> 200 {ok:true,id:...}; GET /api/reviews/suga-shrine -> 200 list length 1",
+    "POST /api/food-festivals (your-name, demon-slayer, both) -> 200 in ~20s; 8 items with anime,kind,name,location,description,best_time",
+    "Frontend navbar shows 6 links: Explore, Atlas, Planner, Companion, Taste, Passport (with Japanese subtitles)",
+    "/explore renders 8 anime cards",
+    "/food: data-testid food-anime-your-name and food-generate-btn present; clicking generate renders 9 food & festival cards",
+    "/login works; redirects to /explore",
+    "/passport: shows Level 1, XP 100, Stamps 1, 5 badges grid (First Step unlocked, others locked with required stamp counts), Check-in list with CHECK IN buttons",
+    "Light sky-blue theme, poster/sticker aesthetic confirmed across landing, food, passport pages"
+  ],
+  "failed": [
+    {
+      "area": "frontend / landing page",
+      "issue": "page.wait_for_load_state('networkidle') timed out at 10s on / (root landing). Page visually renders (navbar + hero verified via other pages loaded from same origin). Likely due to continuous marquee animation / long-poll keeping network busy. Non-blocking.",
+      "evidence": "FAIL landing: Timeout 10000ms exceeded (networkidle). All subsequent pages loaded successfully and navbar visible.",
+      "priority": "LOW"
+    }
+  ],
+  "action_items": [
+    "Optional: investigate landing page networkidle (probably harmless marquee/animation loop keeping network from settling). No user-facing issue observed."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}

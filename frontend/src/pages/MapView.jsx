@@ -25,13 +25,13 @@ export default function MapView() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A0D14] text-white">
+    <div className="min-h-screen bg-sky-texture">
       <Navbar />
       <div className="pt-20 relative">
-        <div className="absolute top-24 left-8 z-[500] glass p-5 max-w-sm" data-testid="map-header-card">
-          <div className="font-accent text-[10px] text-[#F4C5D6] mb-2">PILGRIMAGE ATLAS</div>
-          <div className="font-serif-display text-3xl">Japan, mapped by anime.</div>
-          <div className="text-sm text-zinc-400 mt-2">{locs.length} pilgrimage locations across the archipelago.</div>
+        <div className="absolute top-24 left-8 z-[500] sticker-card rounded-3xl p-5 max-w-sm" data-testid="map-header-card">
+          <div className="font-accent text-[10px] text-rose-500 mb-2">PILGRIMAGE ATLAS</div>
+          <div className="font-display text-3xl">Japan, mapped by anime.</div>
+          <div className="text-sm text-slate-500 mt-2">{locs.length} pilgrimage locations across the archipelago.</div>
         </div>
 
         <div style={{ height: "calc(100vh - 80px)", width: "100%" }}>
@@ -57,14 +57,14 @@ export default function MapView() {
         </div>
 
         {selected && (
-          <div className="absolute bottom-8 right-8 z-[500] glass p-6 max-w-sm" data-testid="map-selected-card">
-            <div className="flex items-center gap-2 font-accent text-[10px] text-[#F4C5D6] mb-2">
+          <div className="absolute bottom-8 right-8 z-[500] sticker-card rounded-3xl p-6 max-w-sm" data-testid="map-selected-card">
+            <div className="flex items-center gap-2 font-accent text-[10px] text-rose-500 mb-2">
               <MapPin size={12} strokeWidth={1.5} /> {selected.city}, {selected.region}
             </div>
-            <div className="font-serif-display text-2xl mb-2">{selected.name}</div>
-            <div className="text-sm text-zinc-400 mb-3">{anime[selected.anime_id]?.title}</div>
-            <p className="text-sm text-zinc-300 leading-relaxed">{selected.description}</p>
-            <p className="text-xs italic text-zinc-500 mt-3">{selected.cultural_note}</p>
+            <div className="font-display text-2xl mb-2">{selected.name}</div>
+            <div className="text-sm text-slate-500 mb-3">{anime[selected.anime_id]?.title}</div>
+            <p className="text-sm text-slate-600 leading-relaxed">{selected.description}</p>
+            <p className="text-xs italic text-slate-400 mt-3">{selected.cultural_note}</p>
           </div>
         )}
       </div>

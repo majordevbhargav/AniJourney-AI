@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css');
 
 @tailwind base;
@@ -8,171 +8,226 @@
 @tailwind utilities;
 
 :root {
-  --bg-base: #0A0D14;
-  --bg-surface: #121620;
-  --bg-highlight: #1A1F2D;
-  --accent-red: #E14D45;
-  --accent-red-hover: #F96058;
-  --accent-sakura: #F4C5D6;
-  --accent-gold: #D4AF37;
-  --accent-blue: #7A9ECA;
-  --border: #1E293B;
+  --sky-50: #F0F9FF;
+  --sky-100: #E0F2FE;
+  --sky-200: #BAE6FD;
+  --sky-400: #38BDF8;
+  --sky-500: #0EA5E9;
+  --sky-600: #0284C7;
+  --sky-700: #0369A1;
+  --coral: #FB7185;
+  --coral-deep: #F43F5E;
+  --peach: #FDBA74;
+  --sun: #FBBF24;
+  --ink: #0F172A;
+  --ink-soft: #334155;
+  --paper: #FEFCF8;
+  --shell: #FFFCF5;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg-base);
-  color: #F8FAFC;
-  font-family: 'Figtree', sans-serif;
-  font-weight: 300;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-.font-serif-display {
-  font-family: 'Cormorant Garamond', serif;
-  letter-spacing: -0.02em;
-}
-.font-accent {
-  font-family: 'Outfit', sans-serif;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+.font-display { font-family: 'Kaisei Decol', serif; font-weight: 700; letter-spacing: -0.01em; }
+.font-body { font-family: 'Zen Maru Gothic', sans-serif; }
+.font-accent { font-family: 'Outfit', sans-serif; letter-spacing: 0.22em; text-transform: uppercase; }
+
+/* Sky texture bg */
+.bg-sky-texture {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(186, 230, 253, 0.6), transparent 50%),
+    radial-gradient(circle at 80% 60%, rgba(253, 186, 116, 0.25), transparent 55%),
+    linear-gradient(180deg, #F0F9FF 0%, #FFFCF5 100%);
 }
 
-/* Grain overlay */
-.grain::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+/* Cloud dots */
+.polka {
+  background-image: radial-gradient(circle, rgba(14, 165, 233, 0.12) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
 
-/* Sakura floating */
-@keyframes sakura-fall {
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 0.7; }
-  100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+/* Sakura */
+@keyframes petal-drift {
+  0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  100% { transform: translateY(110vh) translateX(80px) rotate(360deg); opacity: 0; }
 }
-.sakura-petal {
+.petal {
   position: fixed;
   top: -10vh;
-  width: 12px;
-  height: 12px;
-  background: radial-gradient(circle at 30% 30%, #F4C5D6, #E14D45);
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle at 30% 30%, #FCE7F3, #F87171);
   border-radius: 50% 0 50% 0;
-  animation: sakura-fall linear infinite;
+  animation: petal-drift linear infinite;
   pointer-events: none;
   z-index: 2;
 }
 
-.btn-primary {
-  background: var(--accent-red);
-  color: #F8FAFC;
-  padding: 0.85rem 1.75rem;
-  border-radius: 2px;
-  font-family: 'Outfit', sans-serif;
+/* Anime-official-site title label (Introduction / Character / etc) */
+.section-label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.section-label .en {
+  font-family: 'Kaisei Decol', serif;
+  font-size: 3.5rem;
+  line-height: 0.9;
+  color: var(--sky-600);
+  font-weight: 700;
+  font-style: italic;
+}
+.section-label .jp {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--coral-deep);
   letter-spacing: 0.15em;
-  font-size: 0.75rem;
+}
+
+/* Sticker/Poster card */
+.sticker-card {
+  background: white;
+  border-radius: 24px;
+  padding: 6px;
+  box-shadow: 0 10px 40px -20px rgba(2, 132, 199, 0.35);
+  transition: all 0.4s ease-out;
+  border: 2px solid #E0F2FE;
+}
+.sticker-card:hover {
+  transform: translateY(-6px) rotate(-0.5deg);
+  box-shadow: 0 30px 60px -20px rgba(2, 132, 199, 0.4);
+  border-color: var(--sky-400);
+}
+
+/* Cassette tape / tag ribbon */
+.tape-tag {
+  display: inline-block;
+  background: var(--sun);
+  color: var(--ink);
+  padding: 4px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  font-weight: 600;
+  transform: rotate(-2deg);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+.btn-sky {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sky-500);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
   border: none;
   cursor: pointer;
-  transition: all 0.4s ease-out;
+  transition: all 0.3s ease-out;
+  box-shadow: 0 8px 20px -8px rgba(2, 132, 199, 0.6);
 }
-.btn-primary:hover {
-  background: var(--accent-red-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px -12px rgba(225, 77, 69, 0.5);
-}
-.btn-ghost {
-  background: transparent;
-  color: #F8FAFC;
-  padding: 0.85rem 1.75rem;
-  border-radius: 2px;
+.btn-sky:hover { background: var(--sky-600); transform: translateY(-2px); box-shadow: 0 14px 28px -8px rgba(2, 132, 199, 0.7); }
+
+.btn-coral {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--coral);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 999px;
   font-family: 'Outfit', sans-serif;
-  letter-spacing: 0.15em;
-  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  border: none;
   cursor: pointer;
-  transition: all 0.4s ease-out;
+  transition: all 0.3s ease-out;
+  box-shadow: 0 8px 20px -8px rgba(244, 63, 94, 0.5);
 }
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.4);
+.btn-coral:hover { background: var(--coral-deep); transform: translateY(-2px); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: var(--sky-700);
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+  border: 2px solid var(--sky-400);
+  cursor: pointer;
+  transition: all 0.3s ease-out;
+}
+.btn-outline:hover { background: var(--sky-100); }
+
+/* Marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee {
+  display: flex;
+  gap: 3rem;
+  animation: marquee 40s linear infinite;
+  white-space: nowrap;
 }
 
-.glass {
-  background: rgba(18, 22, 32, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
+/* Leaflet light theme */
+.leaflet-container { background: #E0F2FE !important; font-family: 'Zen Maru Gothic', sans-serif; }
+.leaflet-popup-content-wrapper { background: white !important; color: var(--ink) !important; border-radius: 16px !important; border: 2px solid var(--sky-200) !important; }
+.leaflet-popup-tip { background: white !important; }
+.leaflet-control-attribution { background: rgba(255,255,255,0.8) !important; color: #64748B !important; }
 
-.card-anime {
-  background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.5s ease-out;
-}
-.card-anime:hover {
-  transform: translateY(-4px);
-  border-color: rgba(244, 197, 214, 0.3);
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
-}
-
-/* Leaflet dark theme */
-.leaflet-container {
-  background: #0A0D14 !important;
-  font-family: 'Figtree', sans-serif;
-}
-.leaflet-tile {
-  filter: brightness(0.55) invert(0.9) contrast(1.1) hue-rotate(180deg) saturate(0.4) brightness(0.8);
-}
-.leaflet-popup-content-wrapper {
-  background: rgba(18, 22, 32, 0.95) !important;
-  color: #F8FAFC !important;
-  border: 1px solid rgba(244, 197, 214, 0.3) !important;
-  border-radius: 4px !important;
-}
-.leaflet-popup-tip {
-  background: rgba(18, 22, 32, 0.95) !important;
-}
-.leaflet-control-attribution {
-  background: rgba(0,0,0,0.5) !important;
-  color: #64748B !important;
-}
-.leaflet-control-attribution a { color: #94A3B8 !important; }
-
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--sky-50); }
+::-webkit-scrollbar-thumb { background: var(--sky-400); border-radius: 999px; }
 
 @layer base {
   :root {
-    --background: 220 30% 6%;
-    --foreground: 210 40% 98%;
-    --card: 220 25% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 25% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 4 74% 58%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 25% 15%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 220 25% 15%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 340 65% 86%;
-    --accent-foreground: 220 30% 6%;
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 4 74% 58%;
-    --radius: 2px;
+    --background: 40 100% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 199 100% 95%;
+    --secondary-foreground: 200 98% 30%;
+    --muted: 199 100% 95%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 351 95% 71%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 351 95% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 199 60% 90%;
+    --input: 199 60% 90%;
+    --ring: 199 89% 48%;
+    --radius: 16px;
   }
 }
 

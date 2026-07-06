@@ -71,6 +71,18 @@ class FavoriteIn(BaseModel):
     item_type: str  # "anime" or "location"
     item_id: str
 
+class FoodFestivalIn(BaseModel):
+    anime_ids: List[str]
+    kind: str = "both"  # food | festival | both
+
+class CheckinIn(BaseModel):
+    location_id: str
+
+class ReviewIn(BaseModel):
+    location_id: str
+    rating: int  # 1-5
+    text: str
+
 
 # ---------- Auth Helpers ----------
 def hash_password(p: str) -> str:
@@ -269,6 +281,93 @@ async def get_favs(user=Depends(current_user)):
 async def del_fav(item_type: str, item_id: str, user=Depends(current_user)):
     await db.favorites.delete_one({"user_id": user["id"], "item_type": item_type, "item_id": item_id})
     return {"ok": True}
+
+
+# ---------- AI Food & Festival Recommendations ----------
+@api_router.post("/food-festivals")
+async def food_festivals(data: FoodFestivalIn):
+    animes = await db.anime.find({"id": {"$in": data.anime_ids}}, {"_id": 0}).to_list(20)
+    if not animes:
+        raise HTTPException(400, "Select at least one anime")
+    system = (
+        "You are a Japanese food & festival expert for anime pilgrims. For each anime the user loves, "
+        "recommend real Japanese food dishes and festivals inspired by or referenced in that anime. "
+        "Return valid JSON ONLY (no markdown), shape: "
+        '{"items":[{"anime":"...","kind":"food|festival","name":"...","location":"city / prefecture",'
+        '"description":"2 sentences","best_time":"month or season"}]}'
+    )
+    user_msg = f"Anime: {[a['title'] for a in animes]}. Kind wanted: {data.kind}. Give 6-8 items total, mixed."
+    chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=f"food-{uuid.uuid4()}", system_message=system).with_model("anthropic", "claude-sonnet-4-5-20250929")
+    resp = await chat.send_message(UserMessage(text=user_msg))
+    try:
+        return json.loads(strip_json(resp))
+    except Exception:
+        return {"items": [], "raw": resp}
+
+
+# ---------- Passport (Stamps / XP / Badges) ----------
+BADGES = [
+    {"id": "first-step", "name": "First Step", "emoji": "🌱", "requires": 1},
+    {"id": "shrine-explorer", "name": "Shrine Explorer", "emoji": "⛩️", "requires": 3},
+    {"id": "sakura-master", "name": "Sakura Master", "emoji": "🌸", "requires": 5},
+    {"id": "kyoto-walker", "name": "Kyoto Walker", "emoji": "👘", "requires": 7},
+    {"id": "anime-pilgrim", "name": "Anime Pilgrim", "emoji": "🎌", "requires": 10},
+]
+
+@api_router.post("/visits/checkin")
+async def checkin(data: CheckinIn, user=Depends(current_user)):
+    loc = await db.locations.find_one({"id": data.location_id}, {"_id": 0})
+    if not loc:
+        raise HTTPException(404, "Location not found")
+    existing = await db.visits.find_one({"user_id": user["id"], "location_id": data.location_id})
+    if existing:
+        return {"ok": True, "xp_gained": 0, "already": True}
+    await db.visits.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "location_id": data.location_id,
+        "xp": 100,
+        "ts": datetime.now(timezone.utc).isoformat()
+    })
+    return {"ok": True, "xp_gained": 100}
+
+
+@api_router.get("/passport")
+async def passport(user=Depends(current_user)):
+    visits = await db.visits.find({"user_id": user["id"]}, {"_id": 0}).to_list(500)
+    count = len(visits)
+    total_xp = sum(v.get("xp", 0) for v in visits)
+    level = 1 + total_xp // 300
+    stamps = []
+    if visits:
+        loc_ids = [v["location_id"] for v in visits]
+        locs = await db.locations.find({"id": {"$in": loc_ids}}, {"_id": 0}).to_list(500)
+        loc_map = {l["id"]: l for l in locs}
+        stamps = [{"location": loc_map.get(v["location_id"]), "ts": v["ts"]} for v in visits if loc_map.get(v["location_id"])]
+    badges_out = [{**b, "unlocked": count >= b["requires"]} for b in BADGES]
+    return {"stamps": stamps, "total_xp": total_xp, "level": level, "count": count, "badges": badges_out}
+
+
+# ---------- Reviews ----------
+@api_router.post("/reviews")
+async def add_review(data: ReviewIn, user=Depends(current_user)):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "location_id": data.location_id,
+        "rating": max(1, min(5, data.rating)),
+        "text": data.text,
+        "ts": datetime.now(timezone.utc).isoformat()
+    }
+    await db.reviews.insert_one(doc)
+    return {"ok": True, "id": doc["id"]}
+
+
+@api_router.get("/reviews/{location_id}")
+async def get_reviews(location_id: str):
+    revs = await db.reviews.find({"location_id": location_id}, {"_id": 0}).sort("ts", -1).to_list(100)
+    return revs
 
 
 app.include_router(api_router)

@@ -49,12 +49,12 @@ export default function Companion() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0D14] text-white grain">
+    <div className="min-h-screen bg-sky-texture">
       <Navbar />
       <div className="pt-32 pb-16 px-8 md:px-16 max-w-7xl mx-auto">
-        <div className="font-accent text-[11px] text-[#F4C5D6] mb-4">AI CHARACTER COMPANION</div>
-        <h1 className="font-serif-display text-5xl md:text-6xl font-light mb-4">Walk Japan with a voice you love</h1>
-        <p className="text-zinc-400 max-w-2xl text-lg mb-12">Choose your companion. They will guide you through temples, alleys and stations — in-character, powered by Claude.</p>
+        <div className="font-accent text-[11px] text-rose-500 mb-4">AI CHARACTER COMPANION</div>
+        <h1 className="font-display text-5xl md:text-6xl font-light mb-4">Walk Japan with a voice you love</h1>
+        <p className="text-slate-500 max-w-2xl text-lg mb-12">Choose your companion. They will guide you through temples, alleys and stations — in-character, powered by Claude.</p>
 
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Character picker */}
@@ -62,10 +62,10 @@ export default function Companion() {
             {chars.map((c) => (
               <button key={c.id} onClick={() => startChat(c)}
                       data-testid={`companion-select-${c.id}`}
-                      className={`w-full text-left p-5 border transition-all ${active?.id === c.id ? "border-[#F4C5D6] bg-[#F4C5D6]/5" : "border-white/10 hover:border-white/30 card-anime"}`}>
-                <div className="font-serif-display text-2xl">{c.name}</div>
-                <div className="font-accent text-[10px] text-zinc-500 mt-1">FROM {c.anime.toUpperCase()}</div>
-                <p className="text-xs text-zinc-400 mt-2 line-clamp-2">{c.persona}</p>
+                      className={`w-full text-left p-5 border transition-all ${active?.id === c.id ? "border-rose-300 bg-rose-50" : "border-sky-100 hover:border-sky-300 sticker-card rounded-3xl"}`}>
+                <div className="font-display text-2xl">{c.name}</div>
+                <div className="font-accent text-[10px] text-slate-400 mt-1">FROM {c.anime.toUpperCase()}</div>
+                <p className="text-xs text-slate-500 mt-2 line-clamp-2">{c.persona}</p>
               </button>
             ))}
           </div>
@@ -73,16 +73,16 @@ export default function Companion() {
           {/* Chat */}
           <div className="lg:col-span-8">
             {!active ? (
-              <div className="glass p-16 text-center text-zinc-500 h-full flex flex-col items-center justify-center">
-                <div className="font-serif-display text-3xl mb-3 italic">Choose a companion.</div>
+              <div className="sticker-card rounded-3xl p-16 text-center text-slate-400 h-full flex flex-col items-center justify-center">
+                <div className="font-display text-3xl mb-3 italic">Choose a companion.</div>
                 <div className="font-accent text-[10px]">THEY ARE WAITING</div>
               </div>
             ) : (
-              <div className="glass flex flex-col" style={{ height: "70vh" }} data-testid="companion-chat-window">
-                <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+              <div className="sticker-card rounded-3xl flex flex-col" style={{ height: "70vh" }} data-testid="companion-chat-window">
+                <div className="px-6 py-4 border-b border-sky-100 flex items-center justify-between">
                   <div>
-                    <div className="font-serif-display text-2xl">{active.name}</div>
-                    <div className="font-accent text-[9px] text-[#F4C5D6]">FROM {active.anime.toUpperCase()}</div>
+                    <div className="font-display text-2xl">{active.name}</div>
+                    <div className="font-accent text-[9px] text-rose-500">FROM {active.anime.toUpperCase()}</div>
                   </div>
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
@@ -91,20 +91,20 @@ export default function Companion() {
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
                         m.role === "user"
-                          ? "bg-[#E14D45]/20 border border-[#E14D45]/30 text-white"
-                          : "bg-[#1A1F2D] border border-white/10 text-zinc-200"
+                          ? "bg-rose-100 border border-rose-500/30 text-slate-900"
+                          : "bg-sky-50 border border-sky-100 text-slate-800"
                       }`}>{m.text}</div>
                     </div>
                   ))}
-                  {busy && <div className="text-zinc-500 text-xs flex items-center gap-2"><Loader2 className="animate-spin" size={12} /> {active.name} is thinking...</div>}
+                  {busy && <div className="text-slate-400 text-xs flex items-center gap-2"><Loader2 className="animate-spin" size={12} /> {active.name} is thinking...</div>}
                   <div ref={endRef} />
                 </div>
-                <form onSubmit={send} className="border-t border-white/10 p-4 flex gap-3">
+                <form onSubmit={send} className="border-t border-sky-100 p-4 flex gap-3">
                   <input value={input} onChange={(e) => setInput(e.target.value)}
                          data-testid="companion-input"
                          placeholder={`Message ${active.name}...`}
-                         className="flex-1 bg-transparent outline-none text-white placeholder:text-zinc-600" />
-                  <button disabled={busy} className="btn-primary" data-testid="companion-send-btn">
+                         className="flex-1 bg-transparent outline-none text-slate-900 placeholder:text-slate-300" />
+                  <button disabled={busy} className="btn-coral" data-testid="companion-send-btn">
                     <Send size={14} strokeWidth={1.5} />
                   </button>
                 </form>
