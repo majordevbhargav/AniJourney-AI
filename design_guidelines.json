@@ -1,0 +1,91 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Luxury / Cinematic Fusion with Organic Japanese aesthetics)",
+  "typography": {
+    "headings": {
+      "fontFamily": "Cormorant Garamond, serif",
+      "weights": ["300", "400", "600"],
+      "classes": "font-serif tracking-tight text-white",
+      "import": "@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap');"
+    },
+    "body": {
+      "fontFamily": "Figtree, sans-serif",
+      "weights": ["300", "400", "500"],
+      "classes": "font-sans leading-relaxed text-zinc-300",
+      "import": "@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600&display=swap');"
+    },
+    "accent": {
+      "fontFamily": "Outfit, sans-serif",
+      "weights": ["300", "400"],
+      "classes": "font-sans tracking-[0.2em] uppercase text-xs"
+    }
+  },
+  "colors": {
+    "background": {
+      "base": "#0A0D14",
+      "surface": "#121620",
+      "surfaceHighlight": "#1A1F2D"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "muted": "#475569"
+    },
+    "accent": {
+      "primary": "#E14D45",
+      "primaryHover": "#F96058",
+      "sakura": "#F4C5D6",
+      "gold": "#D4AF37",
+      "mysticBlue": "#7A9ECA"
+    },
+    "border": "#1E293B"
+  },
+  "layout": {
+    "spacingScale": "Generous spacing. Use p-8, p-12, p-24 for sections. High negative space.",
+    "borderRadius": "rounded-sm (2px) to rounded-md (6px) for a sharper, cinematic luxury feel. Avoid pill shapes.",
+    "gridStrategy": "Mode A: 'Tetris' Grid for Marketing (Asymmetry). Mode B: 'Control Room' for Dashboard map UI."
+  },
+  "surfaces": {
+    "glassmorphism": "bg-slate-900/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+    "cards": "bg-[#121620] border border-white/5 hover:-translate-y-1 hover:border-white/20 transition-all duration-300",
+    "mapOverlay": "Crystal glass styling to float above the map without obscuring it."
+  },
+  "components": {
+    "hero": "Max overlay opacity bg-black/40. Cinematic full-height image. Large Cormorant Garamond heading, left-aligned, overlapping.",
+    "buttons": "Primary: Solid #E14D45 with #F8FAFC text, hover:bg-[#F96058]. Secondary: Glassmorphism or transparent with border-white/20 hover:bg-white/10.",
+    "chatInterface": "Minimalist sidebar for character chat. Messages use soft pastel bubbles (Sakura for Frieren, Mystic Blue for Gojo) on deep background.",
+    "icons": "Use lucide-react with strokeWidth={1.5} for thin, elegant strokes."
+  },
+  "motion": {
+    "transitions": "transition-all duration-500 ease-out",
+    "hover": "Subtle lifts (-translate-y-1) and inner border glows. No aggressive scaling.",
+    "scroll": "Smooth scroll (Lenis) with parallax background imagery."
+  },
+  "media": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1665706896821-319040b81753?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxqYXBhbiUyMGt5b3RvJTIwdGVtcGxlJTIwc3Vuc2V0fGVufDB8fHx8MTc4MzMzMjAwNnww&ixlib=rb-4.1.0&q=85",
+      "description": "Sunset pagoda overlooking Kyoto. Use as the main landing page cinematic hero background."
+    },
+    "tokyo_night": {
+      "url": "https://images.pexels.com/photos/1510610/pexels-photo-1510610.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Rainy neon Tokyo street. Use for urban/modern anime location cards (e.g., Jujutsu Kaisen, Your Name vibes)."
+    },
+    "mount_fuji": {
+      "url": "https://images.unsplash.com/photo-1712976692892-07d78428215d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHw0fHxtb3VudCUyMGZ1amklMjBjaGVycnklMjBibG9zc29tc3xlbnwwfHx8fDE3ODMzMzIwMDV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Mount Fuji with cherry blossoms. Use for peaceful/scenic location cards (e.g., Frieren, Demon Slayer vibes)."
+    },
+    "shrine_silhouette": {
+      "url": "https://images.unsplash.com/photo-1512692723619-8b3e68365c9c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwzfHxqYXBhbiUyMGt5b3RvJTIwdGVtcGxlJTIwc3Vuc2V0fGVufDB8fHx8MTc4MzMzMjAwNnww&ixlib=rb-4.1.0&q=85",
+      "description": "Pagoda silhouette. Great for a section background with parallax effect."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use pure HTML/Tailwind for the landing page to achieve an asymmetrical, overlapping 'Tetris' grid.",
+    "For the dashboard/map/trip planner, use Shadcn UI with 'Control Room' density, customized to the dark luxury theme (no rounded pills, use sharp/sm borders).",
+    "Always apply data-testid to interactive elements (e.g., data-testid='generate-trip-button').",
+    "Implement an interactive map (Leaflet) inside a glassmorphic container or as a full-bleed background with glass floating panels.",
+    "Ensure dark mode is forced. The palette is specifically designed for a cinematic dark theme.",
+    "Do not use generic blue/purple tech gradients. Use textured dark backgrounds with subtle, soft, warm lighting (Sakura/Vermillion glow).",
+    "Add font imports to index.css or layout."
+  ]
+}
