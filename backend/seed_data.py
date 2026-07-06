@@ -4,8 +4,35 @@ Curated database of 25 iconic anime and 55+ real pilgrimage sites (聖地).
 All coordinates and cultural notes are researched from actual anime pilgrimage guides.
 """
 
-# --- Poster image pool (Unsplash / Pexels, freely licensed, Japan-themed) ---
+# --- Real anime poster art from MyAnimeList CDN (stable public URLs) ---
 POSTERS = {
+    "frieren":            "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+    "your_name":          "https://cdn.myanimelist.net/images/anime/5/87048.jpg",
+    "spirited_away":      "https://cdn.myanimelist.net/images/anime/6/79597.jpg",
+    "demon_slayer":       "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+    "violet":             "https://cdn.myanimelist.net/images/anime/1795/95088.jpg",
+    "jjk":                "https://cdn.myanimelist.net/images/anime/1171/109222.jpg",
+    "your_lie":           "https://cdn.myanimelist.net/images/anime/3/67177.jpg",
+    "weathering":         "https://cdn.myanimelist.net/images/anime/1630/103417.jpg",
+    "silent_voice":       "https://cdn.myanimelist.net/images/anime/1122/96435.jpg",
+    "totoro":             "https://cdn.myanimelist.net/images/anime/4/75923.jpg",
+    "kiki":               "https://cdn.myanimelist.net/images/anime/1579/140483.jpg",
+    "haikyu":             "https://cdn.myanimelist.net/images/anime/7/76014.jpg",
+    "aot":                "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+    "one_piece":          "https://cdn.myanimelist.net/images/anime/6/73245.jpg",
+    "naruto":             "https://cdn.myanimelist.net/images/anime/13/17405.jpg",
+    "lucky_star":         "https://cdn.myanimelist.net/images/anime/13/75521.jpg",
+    "k_on":               "https://cdn.myanimelist.net/images/anime/10/76120.jpg",
+    "clannad":            "https://cdn.myanimelist.net/images/anime/1804/95033.jpg",
+    "erased":             "https://cdn.myanimelist.net/images/anime/10/77957.jpg",
+    "howl":               "https://cdn.myanimelist.net/images/anime/5/75810.jpg",
+    "chihayafuru":        "https://cdn.myanimelist.net/images/anime/1959/156735.jpg",
+    "hyouka":             "https://cdn.myanimelist.net/images/anime/13/50521.jpg",
+    "garden_words":       "https://cdn.myanimelist.net/images/anime/10/51723.jpg",
+    "steins_gate":        "https://cdn.myanimelist.net/images/anime/5/73199.jpg",
+    "sound_euphonium":    "https://cdn.myanimelist.net/images/anime/1517/142072.jpg",
+
+    # Scenic Japan photos for location cards (real Unsplash / Pexels)
     "fuji_sakura":  "https://images.unsplash.com/photo-1712976692892-07d78428215d?w=800&h=1000&fit=crop&q=80",
     "kyoto_temple": "https://images.unsplash.com/photo-1512692723619-8b3e68365c9c?w=800&h=1000&fit=crop&q=80",
     "torii_sunset": "https://images.unsplash.com/photo-1665706896821-319040b81753?w=800&h=1000&fit=crop&q=80",
@@ -18,10 +45,8 @@ POSTERS = {
     "onsen":        "https://images.unsplash.com/photo-1580651214613-f4692d6d138f?w=800&h=1000&fit=crop&q=80",
     "kamakura":     "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=800&h=1000&fit=crop&q=80",
     "sapporo":      "https://images.unsplash.com/photo-1542640244-7e672d6cef4e?w=800&h=1000&fit=crop&q=80",
-    "nara_deer":    "https://images.unsplash.com/photo-1519693224248-1c1b16d38ca7?w=800&h=1000&fit=crop&q=80",
     "yokohama":     "https://images.unsplash.com/photo-1580827896789-0c6d59ac26bf?w=800&h=1000&fit=crop&q=80",
     "nagoya":       "https://images.unsplash.com/photo-1583400960054-0c0e5d1a2314?w=800&h=1000&fit=crop&q=80",
-    "fuji_lake":    "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=800&h=1000&fit=crop&q=80",
     "temple_moss":  "https://images.unsplash.com/photo-1478436127897-769e1538f1a2?w=800&h=1000&fit=crop&q=80",
     "sakura_lane":  "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800&h=1000&fit=crop&q=80",
     "shrine_night": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&h=1000&fit=crop&q=80",
@@ -34,7 +59,7 @@ ANIME_DATA = [
         "genres": ["Fantasy", "Adventure", "Slice of Life"],
         "mood": ["peaceful", "melancholic", "contemplative"],
         "synopsis": "An elven mage's quiet journey through decades, revisiting friends long gone.",
-        "poster": POSTERS["fuji_sakura"], "year": 2023,
+        "poster": POSTERS["frieren"], "year": 2023,
         "studio": "Madhouse", "episodes": 28
     },
     {
@@ -42,7 +67,7 @@ ANIME_DATA = [
         "genres": ["Romance", "Drama", "Supernatural"],
         "mood": ["romantic", "bittersweet", "cinematic"],
         "synopsis": "Two teens mysteriously swap bodies across time and space.",
-        "poster": POSTERS["sakura_road"], "year": 2016,
+        "poster": POSTERS["your_name"], "year": 2016,
         "studio": "CoMix Wave Films", "episodes": 1
     },
     {
@@ -50,7 +75,7 @@ ANIME_DATA = [
         "genres": ["Fantasy", "Adventure"],
         "mood": ["magical", "whimsical", "nostalgic"],
         "synopsis": "A girl trapped in a spirit world must work at a bathhouse to save her family.",
-        "poster": POSTERS["onsen"], "year": 2001,
+        "poster": POSTERS["spirited_away"], "year": 2001,
         "studio": "Studio Ghibli", "episodes": 1
     },
     {
@@ -58,7 +83,7 @@ ANIME_DATA = [
         "genres": ["Action", "Supernatural", "Historical"],
         "mood": ["intense", "emotional", "epic"],
         "synopsis": "A boy becomes a demon slayer to save his sister and avenge his family.",
-        "poster": POSTERS["torii_sunset"], "year": 2019,
+        "poster": POSTERS["demon_slayer"], "year": 2019,
         "studio": "Ufotable", "episodes": 55
     },
     {
@@ -66,7 +91,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Fantasy", "Slice of Life"],
         "mood": ["emotional", "beautiful", "healing"],
         "synopsis": "A former soldier writes letters for others to understand the words 'I love you'.",
-        "poster": POSTERS["hokkaido"], "year": 2018,
+        "poster": POSTERS["violet"], "year": 2018,
         "studio": "Kyoto Animation", "episodes": 13
     },
     {
@@ -74,7 +99,7 @@ ANIME_DATA = [
         "genres": ["Action", "Supernatural"],
         "mood": ["intense", "modern", "stylish"],
         "synopsis": "A student joins a secret organization to fight curses in modern Japan.",
-        "poster": POSTERS["shibuya"], "year": 2020,
+        "poster": POSTERS["jjk"], "year": 2020,
         "studio": "MAPPA", "episodes": 47
     },
     {
@@ -82,7 +107,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Romance", "Music"],
         "mood": ["emotional", "bittersweet", "beautiful"],
         "synopsis": "A prodigy pianist rediscovers music through a free-spirited violinist.",
-        "poster": POSTERS["sakura_lane"], "year": 2014,
+        "poster": POSTERS["your_lie"], "year": 2014,
         "studio": "A-1 Pictures", "episodes": 22
     },
     {
@@ -90,7 +115,7 @@ ANIME_DATA = [
         "genres": ["Romance", "Drama", "Supernatural"],
         "mood": ["romantic", "cinematic", "urban"],
         "synopsis": "A runaway teen meets a girl who can control the weather in rainy Tokyo.",
-        "poster": POSTERS["tokyo_night"], "year": 2019,
+        "poster": POSTERS["weathering"], "year": 2019,
         "studio": "CoMix Wave Films", "episodes": 1
     },
     {
@@ -98,7 +123,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Romance"],
         "mood": ["emotional", "healing", "melancholic"],
         "synopsis": "A boy seeks redemption after bullying a deaf classmate in elementary school.",
-        "poster": POSTERS["sakura_road"], "year": 2016,
+        "poster": POSTERS["silent_voice"], "year": 2016,
         "studio": "Kyoto Animation", "episodes": 1
     },
     {
@@ -106,7 +131,7 @@ ANIME_DATA = [
         "genres": ["Fantasy", "Family"],
         "mood": ["magical", "nostalgic", "peaceful"],
         "synopsis": "Two sisters befriend forest spirits in rural post-war Japan.",
-        "poster": POSTERS["temple_moss"], "year": 1988,
+        "poster": POSTERS["totoro"], "year": 1988,
         "studio": "Studio Ghibli", "episodes": 1
     },
     {
@@ -114,7 +139,7 @@ ANIME_DATA = [
         "genres": ["Fantasy", "Adventure", "Family"],
         "mood": ["magical", "whimsical", "coming-of-age"],
         "synopsis": "A young witch starts a delivery service in a European-inspired seaside city.",
-        "poster": POSTERS["yokohama"], "year": 1989,
+        "poster": POSTERS["kiki"], "year": 1989,
         "studio": "Studio Ghibli", "episodes": 1
     },
     {
@@ -122,7 +147,7 @@ ANIME_DATA = [
         "genres": ["Sports", "Comedy", "Drama"],
         "mood": ["energetic", "inspiring", "youthful"],
         "synopsis": "A short high-schooler joins a volleyball club to reach the national stage.",
-        "poster": POSTERS["nagoya"], "year": 2014,
+        "poster": POSTERS["haikyu"], "year": 2014,
         "studio": "Production I.G", "episodes": 85
     },
     {
@@ -130,7 +155,7 @@ ANIME_DATA = [
         "genres": ["Action", "Dark Fantasy"],
         "mood": ["intense", "epic", "dark"],
         "synopsis": "Humanity fights giant titans from behind massive walls.",
-        "poster": POSTERS["torii_sunset"], "year": 2013,
+        "poster": POSTERS["aot"], "year": 2013,
         "studio": "Wit Studio / MAPPA", "episodes": 94
     },
     {
@@ -138,7 +163,7 @@ ANIME_DATA = [
         "genres": ["Action", "Adventure", "Comedy"],
         "mood": ["energetic", "epic", "joyful"],
         "synopsis": "Luffy sails the seas with his crew in search of the ultimate treasure.",
-        "poster": POSTERS["osaka"], "year": 1999,
+        "poster": POSTERS["one_piece"], "year": 1999,
         "studio": "Toei Animation", "episodes": 1100
     },
     {
@@ -146,7 +171,7 @@ ANIME_DATA = [
         "genres": ["Action", "Adventure"],
         "mood": ["energetic", "inspiring", "epic"],
         "synopsis": "A young ninja dreams of becoming the leader of his village.",
-        "poster": POSTERS["shrine_night"], "year": 2002,
+        "poster": POSTERS["naruto"], "year": 2002,
         "studio": "Pierrot", "episodes": 220
     },
     {
@@ -154,7 +179,7 @@ ANIME_DATA = [
         "genres": ["Comedy", "Slice of Life"],
         "mood": ["cheerful", "nostalgic", "cozy"],
         "synopsis": "Four high school girls navigate everyday otaku life in Saitama.",
-        "poster": POSTERS["sakura_lane"], "year": 2007,
+        "poster": POSTERS["lucky_star"], "year": 2007,
         "studio": "Kyoto Animation", "episodes": 24
     },
     {
@@ -162,7 +187,7 @@ ANIME_DATA = [
         "genres": ["Comedy", "Music", "Slice of Life"],
         "mood": ["cheerful", "cozy", "nostalgic"],
         "synopsis": "Four friends form a light music club in high school.",
-        "poster": POSTERS["kyoto_temple"], "year": 2009,
+        "poster": POSTERS["k_on"], "year": 2009,
         "studio": "Kyoto Animation", "episodes": 39
     },
     {
@@ -170,7 +195,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Romance", "Supernatural"],
         "mood": ["emotional", "healing", "bittersweet"],
         "synopsis": "A delinquent finds meaning through the lives of his classmates.",
-        "poster": POSTERS["sakura_road"], "year": 2007,
+        "poster": POSTERS["clannad"], "year": 2007,
         "studio": "Kyoto Animation", "episodes": 47
     },
     {
@@ -178,7 +203,7 @@ ANIME_DATA = [
         "genres": ["Mystery", "Thriller", "Supernatural"],
         "mood": ["mysterious", "cinematic", "melancholic"],
         "synopsis": "A struggling manga artist is sent 18 years into the past to stop a killer.",
-        "poster": POSTERS["sapporo"], "year": 2016,
+        "poster": POSTERS["erased"], "year": 2016,
         "studio": "A-1 Pictures", "episodes": 12
     },
     {
@@ -186,7 +211,7 @@ ANIME_DATA = [
         "genres": ["Fantasy", "Romance", "Adventure"],
         "mood": ["magical", "romantic", "whimsical"],
         "synopsis": "A young hat-maker cursed to old age travels with an eccentric wizard.",
-        "poster": POSTERS["arashiyama"], "year": 2004,
+        "poster": POSTERS["howl"], "year": 2004,
         "studio": "Studio Ghibli", "episodes": 1
     },
     {
@@ -194,7 +219,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Sports", "Slice of Life"],
         "mood": ["inspiring", "cultural", "youthful"],
         "synopsis": "A high-school girl pursues competitive karuta poetry.",
-        "poster": POSTERS["temple_moss"], "year": 2011,
+        "poster": POSTERS["chihayafuru"], "year": 2011,
         "studio": "Madhouse", "episodes": 74
     },
     {
@@ -202,7 +227,7 @@ ANIME_DATA = [
         "genres": ["Mystery", "Slice of Life"],
         "mood": ["cozy", "cultural", "contemplative"],
         "synopsis": "A reluctant sleuth solves everyday mysteries in a small mountain town.",
-        "poster": POSTERS["kyoto_temple"], "year": 2012,
+        "poster": POSTERS["hyouka"], "year": 2012,
         "studio": "Kyoto Animation", "episodes": 22
     },
     {
@@ -210,7 +235,7 @@ ANIME_DATA = [
         "genres": ["Drama", "Romance"],
         "mood": ["romantic", "melancholic", "cinematic"],
         "synopsis": "A student and older woman meet in a Tokyo garden during rainy season.",
-        "poster": POSTERS["shrine_night"], "year": 2013,
+        "poster": POSTERS["garden_words"], "year": 2013,
         "studio": "CoMix Wave Films", "episodes": 1
     },
     {
@@ -218,7 +243,7 @@ ANIME_DATA = [
         "genres": ["Sci-Fi", "Thriller", "Drama"],
         "mood": ["mysterious", "intense", "clever"],
         "synopsis": "A mad-scientist sends texts to the past and unravels a time-travel conspiracy.",
-        "poster": POSTERS["shibuya"], "year": 2011,
+        "poster": POSTERS["steins_gate"], "year": 2011,
         "studio": "White Fox", "episodes": 24
     },
     {
@@ -226,7 +251,7 @@ ANIME_DATA = [
         "genres": ["Music", "Drama", "Slice of Life"],
         "mood": ["inspiring", "emotional", "youthful"],
         "synopsis": "A high-school concert band pushes to reach the national competition.",
-        "poster": POSTERS["kyoto_temple"], "year": 2015,
+        "poster": POSTERS["sound_euphonium"], "year": 2015,
         "studio": "Kyoto Animation", "episodes": 26
     }
 ]
