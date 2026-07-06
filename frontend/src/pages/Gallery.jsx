@@ -49,7 +49,7 @@ export default function Gallery() {
                   <div className="font-body text-sm text-slate-700">by <span className="font-display text-slate-900">{it.user_name}</span></div>
                 </div>
                 <button data-testid={`gallery-share-${it.id}`} onClick={() => {
-                  const url = `${window.location.origin}/api/cosplay/image/${it.id}`;
+                  const url = `${window.location.origin}/api/share/cosplay/${it.id}`;
                   navigator.clipboard.writeText(url);
                   toast.success("Share URL copied!");
                 }} className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 hover:bg-sky-200 flex items-center justify-center">

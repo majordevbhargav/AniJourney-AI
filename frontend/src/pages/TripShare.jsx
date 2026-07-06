@@ -14,7 +14,8 @@ export default function TripShare() {
     api.get(`/trips/share/${slug}`).then((r) => setTrip(r.data)).catch(() => setErr(true));
   }, [slug]);
 
-  const copy = () => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied!"); };
+  const shareUrl = `${window.location.origin}/api/share/trip/${slug}`;
+  const copy = () => { navigator.clipboard.writeText(shareUrl); toast.success("Link copied!"); };
   const downloadIcs = () => { window.location.href = `${API}/trips/share/${slug}/ics`; };
   const printPdf = () => window.print();
 

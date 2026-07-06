@@ -1,0 +1,30 @@
+{
+  "summary": "Retest of iter 7/8 blocker (lang-toggle on public landing). The claimed fix was NOT applied — /app/frontend/src/pages/Landing.jsx still has no `import Navbar` and does not render <Navbar/>. Verified via grep and live page load at REACT_APP_BACKEND_URL. hero-title visible with English text; querySelector('[data-testid=lang-toggle]') returns null on public '/'. Backend testing skipped per request.",
+  "tested_scope": ["frontend"],
+  "passed": [
+    "Public landing page loads (200) at https://anime-travel-ai.preview.emergentagent.com/",
+    "data-testid=hero-title is visible with expected English copy ('Travel through the worlds that inspired your favorite anime.')"
+  ],
+  "failed": [
+    {
+      "area": "Landing / Navbar rendering",
+      "issue": "data-testid=lang-toggle is NOT present in the DOM on public '/' (unauthenticated). Landing.jsx has no Navbar import and does not render <Navbar/> — same defect as iter 7/8.",
+      "evidence": "grep -n -i 'navbar' /app/frontend/src/pages/Landing.jsx -> no matches. Playwright: page.query_selector('[data-testid=\"lang-toggle\"]') is None. Screenshot shows hero without any top navbar/toggle.",
+      "priority": "HIGH"
+    },
+    {
+      "area": "Landing i18n toggle",
+      "issue": "Cannot verify EN<->JP hero switch to 'あなたの' because toggle is not rendered.",
+      "evidence": "Blocked by above.",
+      "priority": "HIGH"
+    }
+  ],
+  "action_items": [
+    "In /app/frontend/src/pages/Landing.jsx: add `import Navbar from '../components/Navbar';` at the top and render <Navbar /> as the first child inside the returned root div (same pattern used by Food.jsx, Gallery.jsx, Explore.jsx, etc.).",
+    "Re-run this retest after the file actually contains the Navbar import + render."
+  ],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "33%"},
+  "retest_needed": true,
+  "full_testing_deferred": true,
+  "notes": "Regression on /api/share/trip and /api/share/cosplay was NOT tested (backend explicitly out of scope for this iteration)."
+}
