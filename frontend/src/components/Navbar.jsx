@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Cherry, Menu, X } from "lucide-react";
+import { useI18n } from "../context/I18nContext";
+import { Cherry, Menu, X, Languages } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { lang, setLang } = useI18n();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const links = [
@@ -35,6 +37,10 @@ export default function Navbar() {
           ))}
         </div>
         <div className="hidden md:flex items-center gap-3">
+          <button onClick={() => setLang(lang === "en" ? "jp" : "en")} data-testid="lang-toggle"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-sky-200 text-xs font-body text-slate-700 hover:bg-sky-50">
+            <Languages size={14} /> {lang === "en" ? "日本語" : "English"}
+          </button>
           {user ? (
             <>
               <span className="font-body text-sm text-slate-600">Hi, {user.name}</span>

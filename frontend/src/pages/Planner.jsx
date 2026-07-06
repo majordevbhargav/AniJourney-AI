@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import Navbar from "../components/Navbar";
-import { Loader2, Wallet, CalendarDays, Cloud } from "lucide-react";
+import { Loader2, Wallet, CalendarDays, Cloud, Save, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Planner() {
@@ -13,6 +13,26 @@ export default function Planner() {
   const [startCity, setStartCity] = useState("Tokyo");
   const [busy, setBusy] = useState(false);
   const [itinerary, setItinerary] = useState(null);
+  const [shareSlug, setShareSlug] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const saveTrip = async () => {
+    if (!itinerary) return;
+    setSaving(true);
+    try {
+      const r = await api.post("/trips", { title: itinerary.title || "My Anime Journey", itinerary });
+      setShareSlug(r.data.slug);
+      toast.success("Trip saved!");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Sign in to save.");
+    } finally { setSaving(false); }
+  };
+
+  const copyShare = () => {
+    const url = `${window.location.origin}/trip/${shareSlug}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Share link copied!");
+  };
 
   useEffect(() => { api.get("/anime").then((r) => setAnime(r.data)); }, []);
 
@@ -110,7 +130,16 @@ export default function Planner() {
               <div className="space-y-6" data-testid="itinerary-result">
                 <div className="sticker-card rounded-3xl p-6">
                   <div className="font-accent text-[10px] text-rose-500 mb-2">YOUR ITINERARY</div>
-                  <h2 className="font-display text-3xl mb-2" data-testid="itinerary-title">{itinerary.title}</h2>
+                  <div className="flex items-start justify-between gap-4">
+                    <h2 className="font-display text-3xl mb-2" data-testid="itinerary-title">{itinerary.title}</h2>
+                    {shareSlug ? (
+                      <button onClick={copyShare} className="btn-outline text-xs shrink-0" data-testid="trip-share-btn"><Share2 size={12} /> Copy Link</button>
+                    ) : (
+                      <button onClick={saveTrip} disabled={saving} className="btn-coral text-xs shrink-0" data-testid="trip-save-btn">
+                        {saving ? <Loader2 className="animate-spin" size={12} /> : <><Save size={12} /> Save Trip</>}
+                      </button>
+                    )}
+                  </div>
                   <p className="text-slate-500 mb-4">{itinerary.summary}</p>
                   <div className="font-accent text-[11px] text-amber-600">EST. COST · ₹{itinerary.estimated_cost_inr?.toLocaleString?.() || itinerary.estimated_cost_inr}</div>
                 </div>

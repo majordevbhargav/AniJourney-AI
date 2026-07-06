@@ -1,6 +1,7 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { I18nProvider } from "@/context/I18nContext";
 import { Toaster } from "sonner";
 
 import Landing from "@/pages/Landing";
@@ -14,6 +15,7 @@ import Food from "@/pages/Food";
 import Passport from "@/pages/Passport";
 import Cosplay from "@/pages/Cosplay";
 import Gallery from "@/pages/Gallery";
+import TripShare from "@/pages/TripShare";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -26,6 +28,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <I18nProvider>
         <AuthProvider>
           <Toaster theme="dark" position="top-right" toastOptions={{
             style: { background: "#121620", border: "1px solid rgba(244,197,214,0.3)", color: "#F8FAFC" }
@@ -43,8 +46,10 @@ function App() {
             <Route path="/passport" element={<Protected><Passport /></Protected>} />
             <Route path="/cosplay" element={<Cosplay />} />
             <Route path="/gallery" element={<Protected><Gallery /></Protected>} />
+            <Route path="/trip/:slug" element={<TripShare />} />
           </Routes>
         </AuthProvider>
+        </I18nProvider>
       </BrowserRouter>
     </div>
   );

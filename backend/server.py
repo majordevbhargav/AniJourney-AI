@@ -98,6 +98,10 @@ class CosplayIn(BaseModel):
     style: str = "photorealistic"  # photorealistic | anime | studio
     notes: str = ""
 
+class TripSaveIn(BaseModel):
+    title: str
+    itinerary: dict  # full generated JSON
+
 
 # ---------- Auth Helpers ----------
 def hash_password(p: str) -> str:
@@ -520,6 +524,36 @@ async def transcribe(file: UploadFile = File(...)):
     resp = await stt.transcribe(file=buf, model="whisper-1", response_format="json")
     text = resp.text if hasattr(resp, "text") else str(resp)
     return {"text": text}
+
+
+# ---------- Trip Persistence ----------
+def _slug():
+    return uuid.uuid4().hex[:10]
+
+@api_router.post("/trips")
+async def save_trip(data: TripSaveIn, user=Depends(current_user)):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "slug": _slug(),
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "title": data.title,
+        "itinerary": data.itinerary,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.trips.insert_one(doc)
+    return {"ok": True, "id": doc["id"], "slug": doc["slug"]}
+
+@api_router.get("/trips/mine")
+async def my_trips(user=Depends(current_user)):
+    return await db.trips.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+
+@api_router.get("/trips/share/{slug}")
+async def get_trip(slug: str):
+    t = await db.trips.find_one({"slug": slug}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Trip not found")
+    return t
 
 
 app.include_router(api_router)

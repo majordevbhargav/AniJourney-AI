@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../lib/api";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
+import { Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Gallery() {
   const [items, setItems] = useState([]);
@@ -41,9 +43,18 @@ export default function Gallery() {
           {items.map((it) => (
             <div key={it.id} className="sticker-card rounded-3xl overflow-hidden" data-testid={`gallery-item-${it.id}`}>
               <img src={`${backend}/api/cosplay/image/${it.id}`} alt={it.anime_id} className="w-full aspect-square object-cover" />
-              <div className="p-4">
-                <div className="font-accent text-[10px] text-rose-500 mb-1">{anime[it.anime_id]?.title || it.anime_id}</div>
-                <div className="font-body text-sm text-slate-700">by <span className="font-display text-slate-900">{it.user_name}</span></div>
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="font-accent text-[10px] text-rose-500 mb-1">{anime[it.anime_id]?.title || it.anime_id}</div>
+                  <div className="font-body text-sm text-slate-700">by <span className="font-display text-slate-900">{it.user_name}</span></div>
+                </div>
+                <button data-testid={`gallery-share-${it.id}`} onClick={() => {
+                  const url = `${window.location.origin}/api/cosplay/image/${it.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Share URL copied!");
+                }} className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 hover:bg-sky-200 flex items-center justify-center">
+                  <Share2 size={14} />
+                </button>
               </div>
             </div>
           ))}
