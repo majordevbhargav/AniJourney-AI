@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 5 (STT + Gallery save/share) verified. Backend: STT /api/companion/transcribe returns 'Hello Traveller.' from tts.mp3; /api/cosplay/save returns ok:true with id + storage_path; /api/cosplay/gallery returns 2 items (Everyone) and 1+ for mine=true; /api/cosplay/image/{id} returns 200 image/png. Frontend: /gallery renders with gallery-all-tab, gallery-mine-tab, gallery-new-btn, gallery-grid; 2 images shown loading from /api/cosplay/image/{id}; Mine tab filters correctly. Companion page shows companion-mic-btn (visible, clickable, no crash on click).",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/login → 200, JWT issued (traveler@ani.jp)",
+    "POST /api/companion/transcribe (file=tts.mp3) → 200 {\"text\":\"Hello Traveller.\"}",
+    "POST /api/cosplay/save → 200 {ok:true, id, storage_path}",
+    "GET /api/cosplay/gallery → 2 items sorted newest first",
+    "GET /api/cosplay/gallery?mine=true → filters to current user (1+ items)",
+    "GET /api/cosplay/image/{id} → 200 image/png (70 bytes for test 1x1 png)",
+    "/gallery page: gallery-all-tab, gallery-mine-tab, gallery-new-btn, gallery-grid all visible; 2 images render via /api/cosplay/image/{id}",
+    "/gallery Mine tab click filters items and stays populated with user's items",
+    "/companion page: character cards render, companion-mic-btn visible after selecting Luffy, mic click does not crash (permission denied is acceptable in headless)"
+  ],
+  "failed": [],
+  "notes": [
+    "cosplay-save-btn and 'View Gallery' link are NOT present on /cosplay before an image is generated — this is expected per problem statement ('appears alongside Download' after generation). Not tested via generation to avoid triggering GPT-Image-1 cost; save flow validated directly via /api/cosplay/save endpoint (returns ok) + gallery item appears with user Traveler.",
+    "STT endpoint expects multipart field name 'file' (matches frontend Companion.jsx form.append('file', blob)).",
+    "Existing gallery item image is 70 bytes (test-sized PNG saved via curl); rendered images appear as yellow rectangles in gallery — expected for tiny PNG content."
+  ],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}

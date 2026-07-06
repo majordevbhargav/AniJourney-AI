@@ -13,6 +13,7 @@ import Companion from "@/pages/Companion";
 import Food from "@/pages/Food";
 import Passport from "@/pages/Passport";
 import Cosplay from "@/pages/Cosplay";
+import Gallery from "@/pages/Gallery";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ function App() {
             <Route path="/food" element={<Food />} />
             <Route path="/passport" element={<Protected><Passport /></Protected>} />
             <Route path="/cosplay" element={<Cosplay />} />
+            <Route path="/gallery" element={<Protected><Gallery /></Protected>} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

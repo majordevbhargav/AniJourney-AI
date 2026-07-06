@@ -1,14 +1,16 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Response
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Response, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import re
+import io
 import json
 import base64
 import logging
 import bcrypt
+import requests
 import jwt as pyjwt
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
@@ -19,6 +21,7 @@ from datetime import datetime, timezone, timedelta
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from emergentintegrations.llm.openai.text_to_speech import OpenAITextToSpeech
 from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
+from emergentintegrations.llm.openai.speech_to_text import OpenAISpeechToText
 from seed_data import ANIME_DATA, LOCATION_DATA, CHARACTERS
 
 
@@ -127,6 +130,11 @@ async def seed():
         await db.locations.insert_many([{**l} for l in LOCATION_DATA])
     if await db.characters.count_documents({}) == 0:
         await db.characters.insert_many([{**c} for c in CHARACTERS])
+    try:
+        init_storage()
+        logger.info("Storage initialized")
+    except Exception as e:
+        logger.error(f"Storage init failed: {e}")
     logger.info("Seed complete")
 
 
@@ -422,6 +430,96 @@ async def cosplay_generate(data: CosplayIn):
         raise HTTPException(500, "Image generation failed")
     b64 = base64.b64encode(images[0]).decode()
     return {"anime": anime["title"], "prompt": prompt, "image_b64": b64}
+
+
+# ---------- Object Storage ----------
+STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
+APP_NAME = "anijourney"
+_storage_key = None
+
+def init_storage():
+    global _storage_key
+    if _storage_key:
+        return _storage_key
+    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_LLM_KEY}, timeout=30)
+    resp.raise_for_status()
+    _storage_key = resp.json()["storage_key"]
+    return _storage_key
+
+def put_object(path: str, data: bytes, content_type: str):
+    key = init_storage()
+    resp = requests.put(f"{STORAGE_URL}/objects/{path}",
+                        headers={"X-Storage-Key": key, "Content-Type": content_type},
+                        data=data, timeout=120)
+    resp.raise_for_status()
+    return resp.json()
+
+def get_object(path: str):
+    key = init_storage()
+    resp = requests.get(f"{STORAGE_URL}/objects/{path}",
+                        headers={"X-Storage-Key": key}, timeout=60)
+    resp.raise_for_status()
+    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+
+
+# ---------- Cosplay: modify to allow saving ----------
+@api_router.post("/cosplay/save")
+async def cosplay_save(payload: dict, user=Depends(current_user)):
+    img_b64 = payload.get("image_b64")
+    anime_id = payload.get("anime_id")
+    prompt = payload.get("prompt", "")
+    if not img_b64 or not anime_id:
+        raise HTTPException(400, "Missing fields")
+    img_bytes = base64.b64decode(img_b64)
+    path = f"{APP_NAME}/cosplay/{user['id']}/{uuid.uuid4()}.png"
+    put_object(path, img_bytes, "image/png")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "anime_id": anime_id,
+        "prompt": prompt,
+        "storage_path": path,
+        "is_deleted": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.cosplay.insert_one(doc)
+    return {"ok": True, "id": doc["id"], "storage_path": path}
+
+
+@api_router.get("/cosplay/gallery")
+async def cosplay_gallery(mine: bool = False, user=Depends(current_user)):
+    q = {"is_deleted": False}
+    if mine:
+        q["user_id"] = user["id"]
+    items = await db.cosplay.find(q, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return items
+
+
+@api_router.get("/cosplay/image/{item_id}")
+async def cosplay_image(item_id: str):
+    rec = await db.cosplay.find_one({"id": item_id, "is_deleted": False}, {"_id": 0})
+    if not rec:
+        raise HTTPException(404, "Not found")
+    data, ct = get_object(rec["storage_path"])
+    return Response(content=data, media_type=ct)
+
+
+# ---------- STT: Voice input ----------
+@api_router.post("/companion/transcribe")
+async def transcribe(file: UploadFile = File(...)):
+    audio_bytes = await file.read()
+    if len(audio_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(400, "File too large (25MB max)")
+    stt = OpenAISpeechToText(api_key=EMERGENT_LLM_KEY)
+    ext = (file.filename or "audio.webm").split(".")[-1].lower()
+    if ext not in ["mp3","mp4","mpeg","mpga","m4a","wav","webm"]:
+        ext = "webm"
+    buf = io.BytesIO(audio_bytes)
+    buf.name = f"voice.{ext}"
+    resp = await stt.transcribe(file=buf, model="whisper-1", response_format="json")
+    text = resp.text if hasattr(resp, "text") else str(resp)
+    return {"text": text}
 
 
 app.include_router(api_router)

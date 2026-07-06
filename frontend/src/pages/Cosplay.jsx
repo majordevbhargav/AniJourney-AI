@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import Navbar from "../components/Navbar";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Save } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function Cosplay() {
@@ -12,6 +13,21 @@ export default function Cosplay() {
   const [img, setImg] = useState(null);
   const [busy, setBusy] = useState(false);
   const [meta, setMeta] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState(null);
+
+  const saveToGallery = async () => {
+    if (!img || !meta) return;
+    setSaving(true);
+    try {
+      const b64 = img.replace(/^data:image\/png;base64,/, "");
+      const r = await api.post("/cosplay/save", { image_b64: b64, anime_id: pick, prompt: meta.prompt });
+      setSavedId(r.data.id);
+      toast.success("Saved to gallery!");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Save failed — sign in?");
+    } finally { setSaving(false); }
+  };
 
   useEffect(() => { api.get("/anime").then((r) => { setAnime(r.data); setPick(r.data[0]?.id || ""); }); }, []);
 
@@ -76,7 +92,11 @@ export default function Cosplay() {
                   <div className="p-4">
                     <div className="font-accent text-[10px] text-slate-500 mb-1">{meta.anime.toUpperCase()}</div>
                     <div className="font-body text-xs text-slate-600">{meta.prompt}</div>
-                    <a href={img} download={`cosplay-${pick}.png`} className="btn-outline mt-4 inline-flex" data-testid="cosplay-download-btn">Download</a>
+                    <a href={img} download={`cosplay-${pick}.png`} className="btn-outline mt-4 inline-flex mr-2" data-testid="cosplay-download-btn">Download</a>
+                    <button onClick={saveToGallery} disabled={saving || savedId} className="btn-coral mt-4 inline-flex" data-testid="cosplay-save-btn">
+                      {saving ? <><Loader2 className="animate-spin" size={14} /> Saving...</> : savedId ? "Saved ✓" : <><Save size={14} /> Save to Gallery</>}
+                    </button>
+                    <Link to="/gallery" className="btn-outline mt-4 ml-2 inline-flex" data-testid="cosplay-gallery-link">View Gallery →</Link>
                   </div>
                 )}
               </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api, { API } from "../lib/api";
 import Navbar from "../components/Navbar";
-import { Send, Loader2, Volume2 } from "lucide-react";
+import { Send, Loader2, Volume2, Mic, MicOff } from "lucide-react";
 
 export default function Companion() {
   const [chars, setChars] = useState([]);
@@ -10,8 +10,42 @@ export default function Companion() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [speaking, setSpeaking] = useState(-1);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
   const sessionRef = useRef(null);
   const endRef = useRef(null);
+
+  const toggleRecord = async () => {
+    if (recording) {
+      recorderRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        setTranscribing(true);
+        try {
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const form = new FormData();
+          form.append("file", blob, "voice.webm");
+          const res = await fetch(`${API}/companion/transcribe`, { method: "POST", body: form });
+          const j = await res.json();
+          if (j.text) setInput((v) => (v ? v + " " : "") + j.text);
+        } catch {}
+        setTranscribing(false);
+      };
+      recorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch { alert("Microphone permission denied"); }
+  };
 
   const speak = async (text, idx) => {
     if (!active) return;
@@ -126,10 +160,15 @@ export default function Companion() {
                   {busy && <div className="text-slate-400 text-xs flex items-center gap-2"><Loader2 className="animate-spin" size={12} /> {active.name} is thinking...</div>}
                   <div ref={endRef} />
                 </div>
-                <form onSubmit={send} className="border-t border-sky-100 p-4 flex gap-3">
+                <form onSubmit={send} className="border-t border-sky-100 p-4 flex gap-2 items-center">
+                  <button type="button" onClick={toggleRecord} disabled={transcribing}
+                          data-testid="companion-mic-btn"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition ${recording ? "bg-rose-500 text-white animate-pulse" : "bg-sky-100 text-sky-700 hover:bg-sky-200"}`}>
+                    {transcribing ? <Loader2 className="animate-spin" size={16} /> : recording ? <MicOff size={16} /> : <Mic size={16} />}
+                  </button>
                   <input value={input} onChange={(e) => setInput(e.target.value)}
                          data-testid="companion-input"
-                         placeholder={`Message ${active.name}...`}
+                         placeholder={transcribing ? "Transcribing..." : recording ? "Recording..." : `Message ${active.name}...`}
                          className="flex-1 bg-transparent outline-none text-slate-900 placeholder:text-slate-300" />
                   <button disabled={busy} className="btn-coral" data-testid="companion-send-btn">
                     <Send size={14} strokeWidth={1.5} />
