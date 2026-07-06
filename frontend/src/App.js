@@ -12,6 +12,7 @@ import Planner from "@/pages/Planner";
 import Companion from "@/pages/Companion";
 import Food from "@/pages/Food";
 import Passport from "@/pages/Passport";
+import Cosplay from "@/pages/Cosplay";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ function App() {
             <Route path="/companion" element={<Protected><Companion /></Protected>} />
             <Route path="/food" element={<Food />} />
             <Route path="/passport" element={<Protected><Passport /></Protected>} />
+            <Route path="/cosplay" element={<Cosplay />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>

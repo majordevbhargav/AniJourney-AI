@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import re
 import json
+import base64
 import logging
 import bcrypt
 import jwt as pyjwt
@@ -16,6 +17,8 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from emergentintegrations.llm.openai.text_to_speech import OpenAITextToSpeech
+from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
 from seed_data import ANIME_DATA, LOCATION_DATA, CHARACTERS
 
 
@@ -82,6 +85,15 @@ class ReviewIn(BaseModel):
     location_id: str
     rating: int  # 1-5
     text: str
+
+class TTSIn(BaseModel):
+    text: str
+    character_id: str
+
+class CosplayIn(BaseModel):
+    anime_id: str
+    style: str = "photorealistic"  # photorealistic | anime | studio
+    notes: str = ""
 
 
 # ---------- Auth Helpers ----------
@@ -368,6 +380,48 @@ async def add_review(data: ReviewIn, user=Depends(current_user)):
 async def get_reviews(location_id: str):
     revs = await db.reviews.find({"location_id": location_id}, {"_id": 0}).sort("ts", -1).to_list(100)
     return revs
+
+
+# ---------- TTS: Character Voice ----------
+CHARACTER_VOICES = {
+    "frieren": "nova",     # soft feminine
+    "gojo": "onyx",        # cocky deep male
+    "luffy": "fable",      # bright energetic
+    "violet": "shimmer",   # gentle formal feminine
+    "l": "echo",           # cryptic monotone
+}
+
+@api_router.post("/companion/speak")
+async def companion_speak(data: TTSIn):
+    voice = CHARACTER_VOICES.get(data.character_id, "alloy")
+    tts = OpenAITextToSpeech(api_key=EMERGENT_LLM_KEY)
+    audio_bytes = await tts.generate_speech(
+        text=data.text[:4000],
+        model="tts-1",
+        voice=voice,
+        response_format="mp3"
+    )
+    return Response(content=audio_bytes, media_type="audio/mpeg")
+
+
+# ---------- Cosplay Planner (Image Generation) ----------
+@api_router.post("/cosplay/generate")
+async def cosplay_generate(data: CosplayIn):
+    anime = await db.anime.find_one({"id": data.anime_id}, {"_id": 0})
+    if not anime:
+        raise HTTPException(404, "Anime not found")
+    prompt = (
+        f"A high-quality cosplay reference sheet for a character from '{anime['title']}'. "
+        f"Style: {data.style}. Composition: full-body character on soft studio background, "
+        f"Japanese anime aesthetic, cinematic lighting, detailed costume, cherry blossom accents. "
+        f"{data.notes}".strip()
+    )
+    imgen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
+    images = await imgen.generate_images(prompt=prompt, model="gpt-image-1", number_of_images=1, quality="low")
+    if not images:
+        raise HTTPException(500, "Image generation failed")
+    b64 = base64.b64encode(images[0]).decode()
+    return {"anime": anime["title"], "prompt": prompt, "image_b64": b64}
 
 
 app.include_router(api_router)

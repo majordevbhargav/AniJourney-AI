@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 3 smoke test: reviews (backend+UI), cosplay (backend+UI), and TTS backend all PASS. Regression on /anime/your-name is FIXED (no compile error). BLOCKER: TTS UI 'Hear voice' button (data-testid=speak-btn-N) is NOT implemented in Companion.jsx — assistant replies render as plain text bubbles with no speak button, despite Volume2 icon being imported.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/login (traveler@ani.jp/sakura2026) returns JWT",
+    "GET /api/reviews/suga-shrine returns list newest-first with 2+ existing reviews",
+    "POST /api/reviews (auth) creates new review, returns {ok:true, id:...}",
+    "POST /api/companion/speak {character_id:'frieren'} returns audio/mpeg, ~17KB",
+    "POST /api/cosplay/generate returns valid PNG (base64, 2.4MB, ~12s) with correct PNG magic bytes",
+    "/anime/your-name loads without compile error (regression fixed)",
+    "Reviews modal opens on click of location-reviews-btn-suga-shrine, shows existing reviews + review-form, and posted review appears",
+    "/cosplay page E2E: form renders (select+style buttons+notes+generate btn), clicking cosplay-generate-btn triggers /api/cosplay/generate and cosplay-result img renders with data:image/png;base64 src",
+    "Companion login+character select+send message works; assistant reply 'Greetings.' rendered"
+  ],
+  "failed": [
+    {
+      "area": "frontend / TTS UI",
+      "issue": "Companion.jsx does NOT render a 'Hear voice'/speak button on assistant message bubbles. No data-testid='speak-btn-N' exists in DOM. The Volume2 icon is imported but unused. Backend /api/companion/speak works fine; the UI hook is missing.",
+      "evidence": "Playwright wait_for_selector('[data-testid^=\"speak-btn-\"]') timed out after 45s even though assistant reply 'Greetings.' was rendered. Grep of Companion.jsx shows no 'speak', 'speak-btn', or Volume2 usage inside the message rendering (lines 89-101). Screenshot .screenshots/comp_fail.png confirms bubble has no button.",
+      "priority": "HIGH"
+    }
+  ],
+  "action_items": [
+    "In /app/frontend/src/pages/Companion.jsx, add a 'Hear voice' button with data-testid={`speak-btn-${i}`} on each assistant message that calls POST /api/companion/speak with {text: m.text, character_id: active.id}, converts the response blob to an object URL, and plays it via new Audio(url).play(). The Volume2 icon is already imported."
+  ],
+  "success_rate": {"backend": "100% (5/5 endpoints)", "frontend": "80% (4/5 flows — TTS UI missing)"},
+  "retest_needed": true,
+  "full_testing_deferred": true
+}

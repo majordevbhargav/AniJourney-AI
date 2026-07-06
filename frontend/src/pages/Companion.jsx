@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import api from "../lib/api";
+import api, { API } from "../lib/api";
 import Navbar from "../components/Navbar";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Volume2 } from "lucide-react";
 
 export default function Companion() {
   const [chars, setChars] = useState([]);
