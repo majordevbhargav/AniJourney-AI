@@ -1,0 +1,31 @@
+{
+  "summary": "First-finish smoke test for AniJourney AI MVP. All 8 backend endpoints and 7 frontend flows tested end-to-end via public URL. Everything works: seed data (6 anime, 11 locations, 5 characters), JWT auth (register/login/me/favorites), LLM-powered recommend/trip/companion (Claude Sonnet 4.5), Leaflet map with 11 markers, protected /companion route.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "GET /api/anime returns 6 anime",
+    "GET /api/locations returns 11 locations",
+    "GET /api/anime/your-name returns anime + 3 locations",
+    "GET /api/characters returns 5 characters",
+    "POST /api/auth/register returns JWT + user",
+    "POST /api/auth/login (traveler@ani.jp/sakura2026) returns JWT",
+    "GET /api/auth/me returns authenticated user",
+    "POST /api/favorites (with item_type+item_id) and GET /api/favorites work with Bearer token",
+    "POST /api/recommend returns 3 valid anime recommendations for 'peaceful like Frieren with mystery' (Frieren, Violet Evergarden, Spirited Away)",
+    "POST /api/trip/generate returns itinerary with title, summary, 5 days (day/city/theme/activities), tips",
+    "POST /api/companion/chat returns in-character Frieren reply mentioning Kyoto & Fushimi Inari",
+    "Landing page loads with cinematic hero + Begin Your Journey CTA",
+    "Login form (data-testid=login-form) authenticates and redirects to /explore",
+    "Explore page renders anime-grid with 6 anime-card elements",
+    "Recommend form submits and renders LLM recommendations inline",
+    "/anime/your-name detail page renders with Your Name content",
+    "/map renders Leaflet with exactly 11 red markers over Japan",
+    "/planner: selecting anime + clicking planner-generate-btn produces itinerary-result",
+    "/companion (protected) accessible post-login; selecting Frieren + sending message returns in-character LLM reply"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Favorites endpoint schema requires {item_type, item_id} — matches server.py contract. LLM latency 5-12s per call as expected. test_credentials.md present and used."
+}
