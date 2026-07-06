@@ -16,6 +16,8 @@ export default function Navbar() {
     { to: "/companion", en: "Companion", jp: "同行" },
     { to: "/food", en: "Taste", jp: "食祭" },
     { to: "/passport", en: "Passport", jp: "手帳" },
+    { to: "/community", en: "Stories", jp: "物語" },
+    { to: "/marketplace", en: "Market", jp: "市場" },
   ];
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-b border-sky-100" data-testid="navbar">

@@ -1,17 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import api from "../lib/api";
 import Navbar from "../components/Navbar";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Explore() {
   const [anime, setAnime] = useState([]);
+  const [facets, setFacets] = useState({ genres: [], moods: [], years: { min: 1980, max: 2026 } });
   const [query, setQuery] = useState("");
   const [recs, setRecs] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [genre, setGenre] = useState("");
+  const [mood, setMood] = useState("");
+  const [sort, setSort] = useState("title");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.get("/anime").then((r) => setAnime(r.data)); }, []);
+  const fetchAnime = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("q", search);
+      if (genre) params.set("genre", genre);
+      if (mood) params.set("mood", mood);
+      params.set("sort", sort);
+      const r = await api.get(`/anime?${params.toString()}`);
+      setAnime(r.data);
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => {
+    api.get("/anime/facets").then((r) => setFacets(r.data));
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(fetchAnime, search ? 250 : 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, genre, mood, sort]);
 
   const recommend = async (e) => {
     e.preventDefault();
@@ -25,20 +52,22 @@ export default function Explore() {
     finally { setBusy(false); }
   };
 
-  const recSet = new Set(recs.map(r => r.id));
+  const recSet = useMemo(() => new Set(recs.map(r => r.id)), [recs]);
+  const activeFilters = search || genre || mood;
+  const clearAll = () => { setSearch(""); setGenre(""); setMood(""); };
 
   return (
     <div className="min-h-screen bg-sky-texture">
       <Navbar />
       <div className="pt-32 pb-16 px-8 md:px-16 max-w-7xl mx-auto">
-        <div className="font-accent text-[11px] text-rose-500 mb-4">EXPLORE</div>
+        <div className="font-accent text-[11px] text-rose-500 mb-4">EXPLORE · {facets.total || anime.length} TITLES</div>
         <h1 className="font-display text-5xl md:text-6xl font-light mb-4">The Anime Atlas</h1>
         <p className="text-slate-500 max-w-2xl text-lg leading-relaxed mb-12">
           Describe a feeling and let Claude Sonnet discover your next series, or browse the curated library.
         </p>
 
         {/* AI Recommender */}
-        <form onSubmit={recommend} className="sticker-card rounded-3xl p-6 mb-16" data-testid="recommend-form">
+        <form onSubmit={recommend} className="sticker-card rounded-3xl p-6 mb-8" data-testid="recommend-form">
           <div className="flex items-center gap-3 mb-3">
             <Sparkles size={16} className="text-rose-500" strokeWidth={1.5} />
             <span className="font-accent text-[10px] text-slate-500">MOOD-BASED AI RECOMMENDER</span>
@@ -67,15 +96,58 @@ export default function Explore() {
           )}
         </form>
 
+        {/* Dynamic Filters */}
+        <div className="sticker-card rounded-3xl p-5 mb-10" data-testid="filters-panel">
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px] border-b border-sky-200 focus-within:border-rose-500">
+              <Search size={16} className="text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search title, synopsis, mood..."
+                data-testid="anime-search-input"
+                className="flex-1 bg-transparent outline-none py-2 text-slate-900"
+              />
+            </div>
+            <select value={genre} onChange={(e) => setGenre(e.target.value)} data-testid="genre-filter"
+                    className="bg-white border-2 border-sky-100 rounded-full px-4 py-2 text-sm text-slate-700">
+              <option value="">All Genres</option>
+              {facets.genres.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select value={mood} onChange={(e) => setMood(e.target.value)} data-testid="mood-filter"
+                    className="bg-white border-2 border-sky-100 rounded-full px-4 py-2 text-sm text-slate-700">
+              <option value="">All Moods</option>
+              {facets.moods.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value)} data-testid="sort-select"
+                    className="bg-white border-2 border-sky-100 rounded-full px-4 py-2 text-sm text-slate-700">
+              <option value="title">Sort · Title</option>
+              <option value="year">Sort · Year (newest)</option>
+            </select>
+            {activeFilters && (
+              <button onClick={clearAll} className="text-xs text-rose-500 flex items-center gap-1" data-testid="clear-filters">
+                <X size={12} /> Clear
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Anime Grid */}
+        {loading ? (
+          <div className="text-center py-20 text-slate-400"><Loader2 className="animate-spin mx-auto" /></div>
+        ) : anime.length === 0 ? (
+          <div className="text-center py-20 text-slate-400 font-display text-2xl">
+            No anime match those filters.
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="anime-grid">
           {anime.map((a) => (
             <Link key={a.id} to={`/anime/${a.id}`} className="sticker-card rounded-3xl overflow-hidden block group" data-testid={`anime-card-${a.id}`}>
               <div className="relative h-64 overflow-hidden">
-                <img src={a.poster} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                <img src={a.poster} alt={a.title} onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800&h=1000&fit=crop&q=80"; }} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 {recSet.has(a.id) && (
-                  <div className="absolute top-4 right-4 font-accent text-[9px] bg-[#E14D45] px-3 py-1">AI PICK</div>
+                  <div className="absolute top-4 right-4 font-accent text-[9px] bg-[#E14D45] text-white px-3 py-1 rounded-full">AI PICK</div>
                 )}
                 <div className="absolute bottom-4 left-4 right-4">
                   <div className="font-accent text-[9px] text-rose-300 mb-1">{a.year} · {a.genres.slice(0, 2).join(" · ")}</div>
@@ -85,12 +157,13 @@ export default function Explore() {
               <div className="p-5">
                 <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{a.synopsis}</p>
                 <div className="mt-3 flex gap-2 flex-wrap">
-                  {a.mood.map((m) => <span key={m} className="font-accent text-[9px] text-slate-400 border border-sky-100 px-2 py-1">{m}</span>)}
+                  {a.mood.map((m) => <span key={m} className="font-accent text-[9px] text-slate-400 border border-sky-100 px-2 py-1 rounded-full">{m}</span>)}
                 </div>
               </div>
             </Link>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

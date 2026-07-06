@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles, Map, MessageCircle, Utensils, Award, Compass } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
+import Navbar from "../components/Navbar";
 
 const HERO_1 = "https://images.unsplash.com/photo-1712976692892-07d78428215d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHw0fHxtb3VudCUyMGZ1amklMjBjaGVycnklMjBibG9zc29tc3xlbnwwfHx8fDE3ODMzMzIwMDV8MA&ixlib=rb-4.1.0&q=85";
 const HERO_2 = "https://images.unsplash.com/photo-1665706896821-319040b81753?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxqYXBhbiUyMGt5b3RvJTIwdGVtcGxlJTIwc3Vuc2V0fGVufDB8fHx8MTc4MzMzMjAwNnww&ixlib=rb-4.1.0&q=85";
@@ -26,6 +27,7 @@ export default function Landing() {
   const { t } = useI18n();
   return (
     <div className="min-h-screen bg-sky-texture overflow-x-hidden">
+      <Navbar />
       {/* Sakura petals */}
       {[...Array(16)].map((_, i) => (
         <div key={i} className="petal" style={{ left: `${Math.random() * 100}%`, animationDuration: `${10 + Math.random() * 12}s`, animationDelay: `${Math.random() * 10}s` }} />

@@ -1,0 +1,34 @@
+{
+  "summary": "Full backend + frontend regression for iteration 10. Backend: 23/23 pytest tests PASSED covering anime catalog (25 anime, 44 locations, facets, genre=Music -> 3, q=frieren), auth security (weak-password 422, HTML-sanitized name, wrong-password 401), community CRUD (create/list/like toggle/comment, sanitization, auth-required), and marketplace hotels/events (>=8 hotels, city+max_price+sort filters, >=6 events sorted by date, authed booking returns pending, unauthed 401). Frontend: Landing shows Navbar with lang-toggle button; toggling switches hero title EN -> JP ('あなたの好きな…'). All 8 nav links (Explore/Atlas/Planner/Companion/Taste/Passport/Stories/Market) render. Explore page filters work (search 'love' -> 1 result, Clear -> 25). Community 'Share Your Journey' -> post appears at top of feed. Marketplace tabs switch, Reserve -> Reserved toast fires. TripShare /trip/{slug} shows Copy Link + Add to Calendar + Download PDF; clicking Download PDF triggers a client-side jsPDF download ('Quick Test Trip.pdf'). Iter 9 blocker (Navbar missing on Landing) is fully resolved.",
+  "tested_scope": ["backend", "frontend"],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Navbar (all pages)", "issues": ["Nav labels wrap awkwardly around 1024–1280px viewport because each link has both EN + JP words (e.g. 'Planner 計画'). At 1440px it's fine, at 1024px labels break into 2 lines and crowd the toggle. Consider hiding JP subtitle at md breakpoint."]},
+      {"screen": "Marketplace hotel/event cards", "issues": ["Hotel and event cards lack per-card data-testids like hotel-card-{id}; only Reserve button is testable. Add data-testid='hotel-card-{id}' / 'event-card-{id}' for better test targeting."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Add data-testid=hotel-card-{id} and event-card-{id} to Marketplace cards for finer-grained UI tests.",
+    "(Optional) Responsive polish on Navbar for 1024–1280px so EN+JP labels don't wrap."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 953 lines — consider splitting into routers (auth, anime, community, marketplace, trips) for maintainability once it crosses 1000 lines.",
+    "Marketplace booking is MOCKED (recorded as 'pending' in db.bookings, no payment). This is documented in the review request — no action needed, just confirming.",
+    "Good: unique indexes on users.email and trips.slug created at startup; text indexes on anime/locations enable search; bleach.clean strips HTML from post title/body/comments/name."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (23/23)", "frontend": "100% of tested flows"},
+  "test_credentials": "traveler@ani.jp / sakura2026 (valid; login returns JWT and reaches /explore).",
+  "seed_data_creation": "Test posts titled 'TEST Kyoto Trip …' were created via UI + tests. Test users with TEST_ prefixed emails were created for password/sanitize tests. Safe to leave.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Trip slugs for traveler@ani.jp: de17b40268, 34d2f1a211 (use for PDF/ICS re-verification). Rate limits: register 5/min, login 10/min — tests use fresh random emails to avoid throttling. jsPDF is bundled client-side; download filename = '{trip.title}.pdf'.",
+  "rca of the issue": "n/a — iter 9 Navbar bug already fixed by main agent (import Navbar + <Navbar/> render present in Landing.jsx line 4 and 30). Verified live."
+}

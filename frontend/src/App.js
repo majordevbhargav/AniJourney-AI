@@ -16,6 +16,8 @@ import Passport from "@/pages/Passport";
 import Cosplay from "@/pages/Cosplay";
 import Gallery from "@/pages/Gallery";
 import TripShare from "@/pages/TripShare";
+import Community from "@/pages/Community";
+import Marketplace from "@/pages/Marketplace";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -47,6 +49,8 @@ function App() {
             <Route path="/cosplay" element={<Cosplay />} />
             <Route path="/gallery" element={<Protected><Gallery /></Protected>} />
             <Route path="/trip/:slug" element={<TripShare />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/marketplace" element={<Marketplace />} />
           </Routes>
         </AuthProvider>
         </I18nProvider>

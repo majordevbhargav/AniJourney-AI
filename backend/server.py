@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Response, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Response, UploadFile, File, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -10,13 +10,18 @@ import json
 import base64
 import logging
 import bcrypt
+import bleach
 import requests
 import jwt as pyjwt
 from pathlib import Path
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from emergentintegrations.llm.openai.text_to_speech import OpenAITextToSpeech
@@ -37,6 +42,9 @@ JWT_ALG = "HS256"
 EMERGENT_LLM_KEY = os.environ['EMERGENT_LLM_KEY']
 
 app = FastAPI(title="AniJourney AI")
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
@@ -49,6 +57,23 @@ class RegisterIn(BaseModel):
     email: EmailStr
     password: str
     name: str
+
+    @field_validator("password")
+    @classmethod
+    def strong(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not re.search(r"[A-Za-z]", v) or not re.search(r"\d", v):
+            raise ValueError("Password must include letters and numbers")
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def name_ok(cls, v: str) -> str:
+        v = v.strip()
+        if not 1 <= len(v) <= 60:
+            raise ValueError("Name must be 1-60 characters")
+        return bleach.clean(v, tags=[], strip=True)
 
 class LoginIn(BaseModel):
     email: EmailStr
@@ -128,10 +153,16 @@ async def current_user(cred: HTTPAuthorizationCredentials = Depends(security)):
 # ---------- Seed ----------
 @app.on_event("startup")
 async def seed():
+    # Security: unique index on user email + text index on anime/locations for search
+    await db.users.create_index("email", unique=True)
+    await db.anime.create_index([("title", "text"), ("synopsis", "text"), ("mood", "text"), ("genres", "text")])
+    await db.locations.create_index([("name", "text"), ("city", "text"), ("region", "text"), ("description", "text")])
+    await db.posts.create_index([("created_at", -1)])
+    await db.trips.create_index("slug", unique=True)
     if await db.anime.count_documents({}) == 0:
         await db.anime.insert_many([{**a} for a in ANIME_DATA])
     if await db.locations.count_documents({}) == 0:
-        await db.locations.insert_many([{**l} for l in LOCATION_DATA])
+        await db.locations.insert_many([{**loc} for loc in LOCATION_DATA])
     if await db.characters.count_documents({}) == 0:
         await db.characters.insert_many([{**c} for c in CHARACTERS])
     try:
@@ -149,7 +180,8 @@ async def root():
 
 
 @api_router.post("/auth/register", response_model=TokenOut)
-async def register(data: RegisterIn):
+@limiter.limit("5/minute")
+async def register(request: Request, data: RegisterIn):
     if await db.users.find_one({"email": data.email}):
         raise HTTPException(400, "Email already registered")
     uid = str(uuid.uuid4())
@@ -165,7 +197,8 @@ async def register(data: RegisterIn):
 
 
 @api_router.post("/auth/login", response_model=TokenOut)
-async def login(data: LoginIn):
+@limiter.limit("10/minute")
+async def login(request: Request, data: LoginIn):
     user = await db.users.find_one({"email": data.email})
     if not user or not verify_password(data.password, user["password"]):
         raise HTTPException(401, "Invalid credentials")
@@ -182,8 +215,51 @@ async def me(user=Depends(current_user)):
 
 # ---------- Anime & Locations ----------
 @api_router.get("/anime")
-async def list_anime():
-    return await db.anime.find({}, {"_id": 0}).to_list(500)
+async def list_anime(
+    q: Optional[str] = None,
+    genre: Optional[str] = None,
+    mood: Optional[str] = None,
+    year_min: Optional[int] = None,
+    year_max: Optional[int] = None,
+    sort: str = "title",
+    limit: int = 100,
+):
+    query: dict = {}
+    if genre:
+        query["genres"] = {"$in": [genre]}
+    if mood:
+        query["mood"] = {"$in": [mood]}
+    if year_min is not None or year_max is not None:
+        yr: dict = {}
+        if year_min is not None:
+            yr["$gte"] = year_min
+        if year_max is not None:
+            yr["$lte"] = year_max
+        query["year"] = yr
+    if q:
+        query["$or"] = [
+            {"title": {"$regex": re.escape(q), "$options": "i"}},
+            {"synopsis": {"$regex": re.escape(q), "$options": "i"}},
+            {"genres": {"$regex": re.escape(q), "$options": "i"}},
+            {"mood": {"$regex": re.escape(q), "$options": "i"}},
+        ]
+    sort_field = "year" if sort == "year" else "title"
+    sort_dir = -1 if sort == "year" else 1
+    return await db.anime.find(query, {"_id": 0}).sort(sort_field, sort_dir).to_list(min(max(1, limit), 500))
+
+
+@api_router.get("/anime/facets")
+async def anime_facets():
+    """Dynamic filter options — pulled live from the DB, not hardcoded."""
+    genres = await db.anime.distinct("genres")
+    moods = await db.anime.distinct("mood")
+    years = await db.anime.distinct("year")
+    return {
+        "genres": sorted(genres),
+        "moods": sorted(moods),
+        "years": {"min": min(years) if years else 1980, "max": max(years) if years else 2026},
+        "total": await db.anime.count_documents({}),
+    }
 
 
 @api_router.get("/anime/{anime_id}")
@@ -366,7 +442,7 @@ async def passport(user=Depends(current_user)):
     if visits:
         loc_ids = [v["location_id"] for v in visits]
         locs = await db.locations.find({"id": {"$in": loc_ids}}, {"_id": 0}).to_list(500)
-        loc_map = {l["id"]: l for l in locs}
+        loc_map = {loc["id"]: loc for loc in locs}
         stamps = [{"location": loc_map.get(v["location_id"]), "ts": v["ts"]} for v in visits if loc_map.get(v["location_id"])]
     badges_out = [{**b, "unlocked": count >= b["requires"]} for b in BADGES]
     return {"stamps": stamps, "total_xp": total_xp, "level": level, "count": count, "badges": badges_out}
@@ -375,13 +451,16 @@ async def passport(user=Depends(current_user)):
 # ---------- Reviews ----------
 @api_router.post("/reviews")
 async def add_review(data: ReviewIn, user=Depends(current_user)):
+    text = bleach.clean(data.text or "", tags=[], strip=True)[:1000].strip()
+    if not text:
+        raise HTTPException(400, "Review text required")
     doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
         "user_name": user["name"],
         "location_id": data.location_id,
         "rating": max(1, min(5, data.rating)),
-        "text": data.text,
+        "text": text,
         "ts": datetime.now(timezone.utc).isoformat()
     }
     await db.reviews.insert_one(doc)
@@ -642,6 +721,219 @@ async def og_cosplay(item_id: str):
 <meta http-equiv="refresh" content="0; url=/gallery" />
 </head><body><a href="/gallery">View on AniJourney AI</a></body></html>"""
     return Response(content=html, media_type="text/html")
+
+
+# ---------- Community: Travel Stories / Posts ----------
+class PostIn(BaseModel):
+    title: str
+    body: str
+    anime_id: Optional[str] = None
+    location_id: Optional[str] = None
+    image_b64: Optional[str] = None  # optional attached image
+
+class CommentIn(BaseModel):
+    post_id: str
+    text: str
+
+
+@api_router.post("/community/posts")
+async def create_post(data: PostIn, user=Depends(current_user)):
+    title = bleach.clean(data.title or "", tags=[], strip=True)[:120].strip()
+    body = bleach.clean(data.body or "", tags=[], strip=True)[:3000].strip()
+    if not title or not body:
+        raise HTTPException(400, "Title and body required")
+    storage_path = None
+    if data.image_b64:
+        try:
+            img_bytes = base64.b64decode(data.image_b64)
+            if len(img_bytes) > 5 * 1024 * 1024:
+                raise HTTPException(400, "Image too large (5MB max)")
+            storage_path = f"{APP_NAME}/posts/{user['id']}/{uuid.uuid4()}.png"
+            put_object(storage_path, img_bytes, "image/png")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Post image upload failed: {e}")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "title": title,
+        "body": body,
+        "anime_id": data.anime_id,
+        "location_id": data.location_id,
+        "storage_path": storage_path,
+        "likes": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.posts.insert_one(doc)
+    return {"ok": True, "id": doc["id"]}
+
+
+@api_router.get("/community/posts")
+async def list_posts(anime_id: Optional[str] = None, limit: int = 50):
+    q: dict = {}
+    if anime_id:
+        q["anime_id"] = anime_id
+    items = await db.posts.find(q, {"_id": 0}).sort("created_at", -1).to_list(min(max(1, limit), 100))
+    # attach comment counts + like counts
+    for p in items:
+        p["like_count"] = len(p.get("likes", []))
+        p["comment_count"] = await db.comments.count_documents({"post_id": p["id"]})
+        p["likes"] = []  # don't leak user ids
+    return items
+
+
+@api_router.get("/community/posts/{post_id}")
+async def get_post(post_id: str):
+    p = await db.posts.find_one({"id": post_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Post not found")
+    p["like_count"] = len(p.get("likes", []))
+    comments = await db.comments.find({"post_id": post_id}, {"_id": 0}).sort("ts", 1).to_list(200)
+    p["comments"] = comments
+    p["likes"] = []
+    return p
+
+
+@api_router.post("/community/posts/{post_id}/like")
+async def toggle_like(post_id: str, user=Depends(current_user)):
+    p = await db.posts.find_one({"id": post_id})
+    if not p:
+        raise HTTPException(404, "Post not found")
+    liked = user["id"] in p.get("likes", [])
+    op = "$pull" if liked else "$addToSet"
+    await db.posts.update_one({"id": post_id}, {op: {"likes": user["id"]}})
+    return {"liked": not liked}
+
+
+@api_router.post("/community/comments")
+async def add_comment(data: CommentIn, user=Depends(current_user)):
+    text = bleach.clean(data.text or "", tags=[], strip=True)[:500].strip()
+    if not text:
+        raise HTTPException(400, "Comment text required")
+    if not await db.posts.find_one({"id": data.post_id}):
+        raise HTTPException(404, "Post not found")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "post_id": data.post_id,
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "text": text,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.comments.insert_one(doc)
+    return {"ok": True, "id": doc["id"]}
+
+
+@api_router.get("/community/image/{post_id}")
+async def post_image(post_id: str):
+    p = await db.posts.find_one({"id": post_id}, {"_id": 0})
+    if not p or not p.get("storage_path"):
+        raise HTTPException(404, "Not found")
+    data, ct = get_object(p["storage_path"])
+    return Response(content=data, media_type=ct)
+
+
+# ---------- Marketplace: Hotels & Events (curated + AI-augmented) ----------
+CURATED_HOTELS = [
+    {"id": "hotel-park-tokyo", "name": "Park Hyatt Tokyo", "city": "Tokyo", "region": "Kanto",
+     "price_inr": 32000, "rating": 4.8, "anime_ref": "Lost in Translation vibes near Shibuya",
+     "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800", "amenities": ["Onsen", "Wifi", "Concierge"]},
+    {"id": "hotel-granvia-kyoto", "name": "Hotel Granvia Kyoto", "city": "Kyoto", "region": "Kansai",
+     "price_inr": 18000, "rating": 4.6, "anime_ref": "Steps from Kyoto Animation studio",
+     "image": "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800", "amenities": ["Wifi", "Spa", "Breakfast"]},
+    {"id": "hotel-nishiyama", "name": "Nishiyama Ryokan", "city": "Kyoto", "region": "Kansai",
+     "price_inr": 12000, "rating": 4.7, "anime_ref": "Traditional tatami stay near Arashiyama",
+     "image": "https://images.unsplash.com/photo-1580651214613-f4692d6d138f?w=800", "amenities": ["Onsen", "Kaiseki", "Tatami"]},
+    {"id": "hotel-osaka-fp", "name": "The Fairmont Osaka", "city": "Osaka", "region": "Kansai",
+     "price_inr": 21000, "rating": 4.7, "anime_ref": "Near Universal Studios (One Piece / Naruto zones)",
+     "image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800", "amenities": ["Pool", "Gym", "Wifi"]},
+    {"id": "hotel-ginzan-fujiya", "name": "Notoya Ryokan", "city": "Obanazawa", "region": "Yamagata",
+     "price_inr": 22000, "rating": 4.9, "anime_ref": "Spirited Away's snowy bathhouse",
+     "image": "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=800", "amenities": ["Onsen", "Kaiseki", "River view"]},
+    {"id": "hotel-hakone-koraku", "name": "Hakone Kowakien Ten-yu", "city": "Hakone", "region": "Kanagawa",
+     "price_inr": 16500, "rating": 4.6, "anime_ref": "Mt. Fuji views like Your Name",
+     "image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800", "amenities": ["Onsen", "Fuji view", "Breakfast"]},
+    {"id": "hotel-sapporo-jrt", "name": "JR Tower Hotel Nikko Sapporo", "city": "Sapporo", "region": "Hokkaido",
+     "price_inr": 14000, "rating": 4.5, "anime_ref": "Erased Hokkaido setting",
+     "image": "https://images.unsplash.com/photo-1542640244-7e672d6cef4e?w=800", "amenities": ["Spa", "Wifi", "Gym"]},
+    {"id": "hotel-uji-hanayashiki", "name": "Hanayashiki Ukifune-en", "city": "Uji", "region": "Kyoto",
+     "price_inr": 19000, "rating": 4.7, "anime_ref": "Sound! Euphonium riverside",
+     "image": "https://images.unsplash.com/photo-1528164344705-47542687000d?w=800", "amenities": ["Onsen", "River view", "Matcha kaiseki"]},
+]
+
+CURATED_EVENTS = [
+    {"id": "evt-ac-tokyo", "name": "AnimeJapan Tokyo Big Sight", "city": "Tokyo", "date": "2026-03-21",
+     "type": "Convention", "price_inr": 2500,
+     "image": "https://images.unsplash.com/photo-1541562232579-512a21360020?w=800",
+     "description": "Japan's largest anime industry convention."},
+    {"id": "evt-kyoto-jidai", "name": "Kyoto Jidai Matsuri", "city": "Kyoto", "date": "2026-10-22",
+     "type": "Festival", "price_inr": 0,
+     "image": "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800",
+     "description": "Historic parade — inspired countless period anime."},
+    {"id": "evt-ashikaga-wisteria", "name": "Ashikaga Wisteria Festival", "city": "Ashikaga", "date": "2026-04-25",
+     "type": "Festival", "price_inr": 1800,
+     "image": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800",
+     "description": "The wisteria groves that inspired Demon Slayer."},
+    {"id": "evt-jjk-exhibit", "name": "Jujutsu Kaisen Museum Exhibit", "city": "Tokyo", "date": "2026-05-10",
+     "type": "Exhibition", "price_inr": 3200,
+     "image": "https://images.unsplash.com/photo-1554797589-7241bb691973?w=800",
+     "description": "Limited-run exhibition celebrating the Shibuya Incident."},
+    {"id": "evt-ghibli-park", "name": "Ghibli Park Autumn Openings", "city": "Nagakute", "date": "2026-10-01",
+     "type": "Theme Park", "price_inr": 4500,
+     "image": "https://images.unsplash.com/photo-1512692723619-8b3e68365c9c?w=800",
+     "description": "Newly opened Mononoke Village + Witch Valley."},
+    {"id": "evt-sakura-tokyo", "name": "Tokyo Sakura Matsuri", "city": "Tokyo", "date": "2026-03-28",
+     "type": "Festival", "price_inr": 0,
+     "image": "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800",
+     "description": "Cherry blossom festival at Ueno Park & Meguro River."},
+]
+
+
+@api_router.get("/marketplace/hotels")
+async def marketplace_hotels(city: Optional[str] = None, max_price: Optional[int] = None, sort: str = "rating"):
+    items = list(CURATED_HOTELS)
+    if city:
+        items = [h for h in items if h["city"].lower() == city.lower()]
+    if max_price is not None:
+        items = [h for h in items if h["price_inr"] <= max_price]
+    if sort == "price":
+        items.sort(key=lambda h: h["price_inr"])
+    else:
+        items.sort(key=lambda h: -h["rating"])
+    return items
+
+
+@api_router.get("/marketplace/events")
+async def marketplace_events(event_type: Optional[str] = None, city: Optional[str] = None):
+    items = list(CURATED_EVENTS)
+    if event_type:
+        items = [e for e in items if e["type"].lower() == event_type.lower()]
+    if city:
+        items = [e for e in items if e["city"].lower() == city.lower()]
+    items.sort(key=lambda e: e["date"])
+    return items
+
+
+@api_router.post("/marketplace/book")
+async def marketplace_book(payload: dict, user=Depends(current_user)):
+    """Mock booking endpoint — records intent, doesn't take payment."""
+    item_type = payload.get("item_type")
+    item_id = payload.get("item_id")
+    if item_type not in ("hotel", "event") or not item_id:
+        raise HTTPException(400, "Invalid booking payload")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "item_type": item_type,
+        "item_id": item_id,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.bookings.insert_one(doc)
+    return {"ok": True, "id": doc["id"], "status": "pending"}
+
 
 
 app.include_router(api_router)
