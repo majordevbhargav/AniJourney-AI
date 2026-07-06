@@ -1,0 +1,25 @@
+{
+  "summary": "Iter 8 retest of 2 fixes. Backend OG endpoints at /api/share/* now work publicly (both trip and cosplay return 200 with correct meta). Landing lang-toggle fix is INCOMPLETE: Navbar.jsx was updated correctly but Landing.jsx does not render <Navbar/> at all, so lang-toggle count=0 on public '/'.",
+  "tested_scope": ["backend", "frontend", "integration"],
+  "passed": [
+    "GET /api/share/trip/34d2f1a211 -> HTTP 200, og:title='Test Kyoto Trip · AniJourney AI', og:description='Serene', og:image=unsplash URL, og:url=/trip/34d2f1a211",
+    "GET /api/share/cosplay/d3aa1c40-058f-4b33-a36a-6fcd0f6f17be -> HTTP 200, og:title='Cosplay · Your Name (Kimi no Na wa)', og:description='Cosplay design by Traveler — AniJourney AI', og:image=/api/cosplay/image/{id}",
+    "POST /api/auth/login for traveler@ani.jp works (token returned)",
+    "GET /api/cosplay/gallery returns user cosplay items with valid ids",
+    "Public '/' landing page loads and renders hero (H1: 'Travel through the worlds that inspired your favorite anime.')"
+  ],
+  "failed": [
+    {
+      "area": "frontend / landing navbar",
+      "issue": "lang-toggle NOT visible on public unauthenticated '/'. Playwright locator [data-testid=lang-toggle] count=0 on landing. Root cause: /app/frontend/src/pages/Landing.jsx does not import or render the <Navbar/> component at all — only pages that mount Navbar (Explore, Map, etc.) will show lang-toggle. Moving lang-toggle out of 'hidden md:flex' in Navbar.jsx is a correct but insufficient fix; the anonymous landing needs Navbar mounted (or a standalone lang-toggle rendered directly in Landing.jsx).",
+      "evidence": "Playwright: 'lang-toggle count: 0'. grep in Landing.jsx shows no 'Navbar' import; App.js route '/' -> <Landing/> with no wrapper providing Navbar. Screenshot of '/' shows no top navbar bar.",
+      "priority": "HIGH"
+    }
+  ],
+  "action_items": [
+    "In /app/frontend/src/pages/Landing.jsx, import and render <Navbar/> at the top of the page (same as other pages), OR render a standalone lang-toggle button inside Landing.jsx that calls useI18n().setLang. This will make the landing lang-toggle testable and switch hero EN <-> JP as intended."
+  ],
+  "success_rate": {"backend": "100%", "frontend": "50%"},
+  "retest_needed": true,
+  "full_testing_deferred": true
+}

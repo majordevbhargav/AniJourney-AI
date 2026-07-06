@@ -592,7 +592,7 @@ async def trip_ics(slug: str):
     return Response(content=ics, media_type="text/calendar", headers={"Content-Disposition": f'attachment; filename="{slug}.ics"'})
 
 
-@app.get("/share/trip/{slug}")
+@api_router.get("/share/trip/{slug}", response_class=Response)
 async def og_trip(slug: str):
     t = await db.trips.find_one({"slug": slug}, {"_id": 0})
     if not t:
@@ -620,7 +620,7 @@ async def og_trip(slug: str):
     return Response(content=html, media_type="text/html")
 
 
-@app.get("/share/cosplay/{item_id}")
+@api_router.get("/share/cosplay/{item_id}", response_class=Response)
 async def og_cosplay(item_id: str):
     rec = await db.cosplay.find_one({"id": item_id, "is_deleted": False}, {"_id": 0})
     if not rec:

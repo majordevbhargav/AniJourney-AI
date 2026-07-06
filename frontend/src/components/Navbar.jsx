@@ -36,11 +36,12 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
-        <div className="hidden md:flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <button onClick={() => setLang(lang === "en" ? "jp" : "en")} data-testid="lang-toggle"
                   className="flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-sky-200 text-xs font-body text-slate-700 hover:bg-sky-50">
-            <Languages size={14} /> {lang === "en" ? "日本語" : "English"}
+            <Languages size={14} /> {lang === "en" ? "日本語" : "EN"}
           </button>
+        <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
               <span className="font-body text-sm text-slate-600">Hi, {user.name}</span>
@@ -52,6 +53,7 @@ export default function Navbar() {
               <Link to="/register" className="btn-coral" data-testid="nav-register-btn">Begin</Link>
             </>
           )}
+        </div>
         </div>
         <button className="lg:hidden text-slate-700" onClick={() => setOpen(!open)} data-testid="nav-mobile-toggle">
           {open ? <X /> : <Menu />}
