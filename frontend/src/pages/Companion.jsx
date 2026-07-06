@@ -9,8 +9,26 @@ export default function Companion() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [speaking, setSpeaking] = useState(-1);
   const sessionRef = useRef(null);
   const endRef = useRef(null);
+
+  const speak = async (text, idx) => {
+    if (!active) return;
+    setSpeaking(idx);
+    try {
+      const res = await fetch(`${API}/companion/speak`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.slice(0, 3800), character_id: active.id })
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { setSpeaking(-1); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch { setSpeaking(-1); }
+  };
 
   useEffect(() => { api.get("/characters").then((r) => setChars(r.data)); }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -89,11 +107,20 @@ export default function Companion() {
                 <div className="flex-1 overflow-y-auto p-6 space-y-4" data-testid="companion-messages">
                   {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
+                      <div className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed rounded-2xl ${
                         m.role === "user"
                           ? "bg-rose-100 border border-rose-500/30 text-slate-900"
                           : "bg-sky-50 border border-sky-100 text-slate-800"
-                      }`}>{m.text}</div>
+                      }`}>
+                        <div>{m.text}</div>
+                        {m.role === "assistant" && (
+                          <button onClick={() => speak(m.text, i)} disabled={speaking !== -1} data-testid={`speak-btn-${i}`}
+                                  className="mt-2 inline-flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800">
+                            {speaking === i ? <Loader2 className="animate-spin" size={12} /> : <Volume2 size={12} />}
+                            {speaking === i ? "Speaking..." : "Hear voice"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {busy && <div className="text-slate-400 text-xs flex items-center gap-2"><Loader2 className="animate-spin" size={12} /> {active.name} is thinking...</div>}

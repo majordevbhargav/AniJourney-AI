@@ -1,0 +1,18 @@
+{
+  "summary": "Re-verified TTS 'Hear voice' UI fix on /companion. speak-btn is now rendered on assistant messages, click triggers /api/companion/speak (200), and button state correctly transitions to 'Speaking...' with Loader2 spinner.",
+  "tested_scope": ["frontend", "integration"],
+  "passed": [
+    "Login as traveler@ani.jp/sakura2026 succeeds",
+    "Selecting Frieren renders greeting with data-testid=speak-btn-0 and 'Hear voice' label + Volume2 icon",
+    "Clicking speak-btn-0 changes text to 'Speaking...' and shows animate-spin (Loader2)",
+    "Network: POST /api/companion/speak returned 200 for greeting",
+    "Sending 'Hello' produces AI assistant reply with speak-btn-2 rendered",
+    "Clicking speak-btn-2 also transitions to 'Speaking...' with spinner and fires /api/companion/speak",
+    "Button correctly reverts to 'Hear voice' after playback completes"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "n/a (not tested)", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
